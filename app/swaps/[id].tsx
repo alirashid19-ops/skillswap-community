@@ -74,7 +74,7 @@ const classifySlotStatus = (slot: SwapTimeProposal) => {
 export default function SwapDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { getSwapById, addMessage, addCounterProposal, acceptProposal, declineSwap, updateLocation, completeSwap, setCalendarEventId } = useSkillSwaps();
+  const { swaps, addMessage, addCounterProposal, acceptProposal, declineSwap, updateLocation, completeSwap, setCalendarEventId } = useSkillSwaps();
   const { currentUser, allUsers } = useCurrentUser();
   const [messageDraft, setMessageDraft] = useState<string>('');
   const [counterNotes, setCounterNotes] = useState<string>('');
@@ -87,8 +87,8 @@ export default function SwapDetailScreen() {
     if (!id) {
       return undefined;
     }
-    return getSwapById(id);
-  }, [getSwapById, id]);
+    return swaps.find((s) => s.id === id);
+  }, [swaps, id]);
 
   const allSkills = useMemo<SkillWithUser[]>(() => getSkillsWithUsers(), []);
   const skillsMap = useMemo(() => {
@@ -279,7 +279,7 @@ export default function SwapDetailScreen() {
     } finally {
       setIsSyncingCalendar(false);
     }
-  }, [swap, counterpartSkill, partner]);
+  }, [swap, counterpartSkill, partner, setCalendarEventId]);
 
   const handleExportToICalendar = useCallback(async () => {
     if (!swap || !swap.acceptedTimeId) {
