@@ -6,6 +6,7 @@ import { MapPin, Clock, Check, X, Send, Sparkles, CalendarClock, PlusCircle, Arr
 import Colors from '../../constants/colors';
 import { useSkillSwaps } from '../../providers/skill-swaps';
 import { useCurrentUser } from '../../providers/current-user';
+import { trpc } from '../../lib/trpc';
 import { getSkillsWithUsers } from '../../mocks/data';
 import type { SkillWithUser, SkillSwapStatus, SwapTimeProposal } from '../../types';
 import { addSwapToCalendar, exportSwapToICalendar } from '../../lib/calendar';
@@ -76,6 +77,7 @@ export default function SwapDetailScreen() {
   const router = useRouter();
   const { swaps, addMessage, addCounterProposal, acceptProposal, declineSwap, updateLocation, completeSwap, setCalendarEventId } = useSkillSwaps();
   const { currentUser, allUsers } = useCurrentUser();
+  const sendMessageMutation = trpc.chat.sendMessage.useMutation();
   const [messageDraft, setMessageDraft] = useState<string>('');
   const [counterNotes, setCounterNotes] = useState<string>('');
   const [locationDraft, setLocationDraft] = useState<string>('');
@@ -161,7 +163,7 @@ export default function SwapDetailScreen() {
     });
   }, []);
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     console.log('[SwapDetail] handleSendMessage called', { swap: !!swap, messageDraft: messageDraft.trim() });
     if (!swap || messageDraft.trim().length === 0) {
       setErrorBanner('Add a message before sending.');
@@ -170,10 +172,20 @@ export default function SwapDetailScreen() {
     setErrorBanner(null);
     const trimmedMessage = messageDraft.trim();
     console.log('[SwapDetail] Sending message', { swapId: swap.id, message: trimmedMessage });
-    addMessage({ requestId: swap.id, authorId: currentUser.id, body: trimmedMessage });
-    setMessageDraft('');
-    console.log('[SwapDetail] Message sent, input cleared');
-  }, [addMessage, currentUser.id, messageDraft, swap]);
+    
+    try {
+      await sendMessageMutation.mutateAsync({
+        swapId: swap.id,
+        body: trimmedMessage,
+      });
+      addMessage({ requestId: swap.id, authorId: currentUser.id, body: trimmedMessage });
+      setMessageDraft('');
+      console.log('[SwapDetail] Message sent successfully');
+    } catch (error) {
+      console.error('[SwapDetail] Failed to send message:', error);
+      setErrorBanner('Failed to send message. Please try again.');
+    }
+  }, [addMessage, currentUser.id, messageDraft, swap, sendMessageMutation]);
 
   const handleSubmitCounter = useCallback(() => {
     if (!swap) {
@@ -538,9 +550,14 @@ export default function SwapDetailScreen() {
               style={styles.sendButton}
               onPress={handleSendMessage}
               activeOpacity={0.9}
+              disabled={sendMessageMutation.isPending}
               testID="send-message"
             >
-              <Send size={18} color="#0B1220" />
+              {sendMessageMutation.isPending ? (
+                <Text style={{ color: '#0B1220', fontSize: 12, fontWeight: '600' as const }}>...</Text>
+              ) : (
+                <Send size={18} color="#0B1220" />
+              )}
             </TouchableOpacity>
           </View>
         </View>
