@@ -162,14 +162,17 @@ export default function SwapDetailScreen() {
   }, []);
 
   const handleSendMessage = useCallback(() => {
+    console.log('[SwapDetail] handleSendMessage called', { swap: !!swap, messageDraft: messageDraft.trim() });
     if (!swap || messageDraft.trim().length === 0) {
       setErrorBanner('Add a message before sending.');
       return;
     }
     setErrorBanner(null);
-    console.log('[SwapDetail] Sending message', { swapId: swap.id });
-    addMessage({ requestId: swap.id, authorId: currentUser.id, body: messageDraft.trim() });
+    const trimmedMessage = messageDraft.trim();
+    console.log('[SwapDetail] Sending message', { swapId: swap.id, message: trimmedMessage });
+    addMessage({ requestId: swap.id, authorId: currentUser.id, body: trimmedMessage });
     setMessageDraft('');
+    console.log('[SwapDetail] Message sent, input cleared');
   }, [addMessage, currentUser.id, messageDraft, swap]);
 
   const handleSubmitCounter = useCallback(() => {

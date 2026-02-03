@@ -218,18 +218,22 @@ export const [SkillSwapsProvider, useSkillSwaps] = createContextHook<SkillSwapsC
   }, [buildDerived]);
 
   const addMessage = useCallback(({ requestId, authorId, body, isSystem }: AddMessageInput) => {
+    console.log('[SkillSwaps] addMessage called', { requestId, authorId, body, isSystem });
     setSwaps((previous) => {
-      return previous.map((swap) => {
+      const updated = previous.map((swap) => {
         if (swap.id !== requestId) {
           return swap;
         }
-        const nextNotes = [...swap.negotiationNotes, buildMessage(authorId, body, isSystem)];
+        const newMessage = buildMessage(authorId, body, isSystem);
+        const nextNotes = [...swap.negotiationNotes, newMessage];
+        console.log('[SkillSwaps] Adding message', { swapId: swap.id, messageId: newMessage.id, totalNotes: nextNotes.length });
         return {
           ...swap,
           negotiationNotes: nextNotes,
           updatedAt: new Date().toISOString(),
         };
       });
+      return updated;
     });
   }, []);
 
