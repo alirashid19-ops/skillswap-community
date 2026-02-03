@@ -1,16 +1,6 @@
 import { z } from "zod";
 import { protectedProcedure } from "../../create-context";
-
-interface Message {
-  id: string;
-  swapId: string;
-  authorId: string;
-  body: string;
-  createdAt: string;
-  isSystem?: boolean;
-}
-
-const messagesStore = new Map<string, Message[]>();
+import { messagesStore, Message } from "./fetch-messages";
 
 export const sendMessageProcedure = protectedProcedure
   .input(

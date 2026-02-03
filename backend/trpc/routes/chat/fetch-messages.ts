@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { protectedProcedure } from "../../create-context";
 
-interface Message {
+export interface Message {
   id: string;
   swapId: string;
   authorId: string;
