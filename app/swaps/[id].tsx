@@ -173,17 +173,18 @@ export default function SwapDetailScreen() {
     const trimmedMessage = messageDraft.trim();
     console.log('[SwapDetail] Sending message', { swapId: swap.id, message: trimmedMessage });
     
+    addMessage({ requestId: swap.id, authorId: currentUser.id, body: trimmedMessage });
+    setMessageDraft('');
+    console.log('[SwapDetail] Message added to local state');
+    
     try {
       await sendMessageMutation.mutateAsync({
         swapId: swap.id,
         body: trimmedMessage,
       });
-      addMessage({ requestId: swap.id, authorId: currentUser.id, body: trimmedMessage });
-      setMessageDraft('');
-      console.log('[SwapDetail] Message sent successfully');
+      console.log('[SwapDetail] Message sent to backend successfully');
     } catch (error) {
-      console.error('[SwapDetail] Failed to send message:', error);
-      setErrorBanner('Failed to send message. Please try again.');
+      console.error('[SwapDetail] Failed to send message to backend:', error);
     }
   }, [addMessage, currentUser.id, messageDraft, swap, sendMessageMutation]);
 
