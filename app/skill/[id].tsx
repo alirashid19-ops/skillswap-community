@@ -40,21 +40,15 @@ export default function SkillDetailScreen() {
   const { currentUser } = useCurrentUser();
   const [isSwapModalVisible, setSwapModalVisible] = useState<boolean>(false);
 
-  if (!skill) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Skill not found</Text>
-      </View>
-    );
-  }
-
-  const reviewsSummary = trpc.reviews.list.useQuery({ revieweeId: skill.user.id, skillId: skill.id }, {
-    enabled: Boolean(skill.user.id && skill.id),
-  });
-  const skillAverageRating = reviewsSummary.data?.stats.averageRating ?? skill.user.rating;
+  const reviewsSummary = trpc.reviews.list.useQuery(
+    { revieweeId: skill?.user.id ?? '', skillId: skill?.id ?? '' },
+    { enabled: Boolean(skill?.user.id && skill?.id) }
+  );
+  const skillAverageRating = reviewsSummary.data?.stats.averageRating ?? skill?.user.rating ?? 0;
   const skillTotalReviews = reviewsSummary.data?.stats.totalReviews ?? 0;
 
   const activeSwap = useMemo(() => {
+    if (!skill) return null;
     return swaps.find((candidate) => {
       if (candidate.recipientId === skill.user.id && candidate.requesterId === currentUser.id) {
         return true;
@@ -64,7 +58,7 @@ export default function SkillDetailScreen() {
       }
       return false;
     }) ?? null;
-  }, [currentUser.id, skill.user.id, swaps]);
+  }, [currentUser.id, skill, swaps]);
 
   const swapStatusLabel = useMemo(() => {
     if (!activeSwap) {
@@ -114,12 +108,21 @@ export default function SkillDetailScreen() {
     }
     setSwapModalVisible(true);
   }, [activeSwap, router]);
+
   const contentContainerStyle = useMemo(() => {
     return {
       paddingBottom: insets.bottom + 140,
       paddingTop: insets.top,
     };
   }, [insets.bottom, insets.top]);
+
+  if (!skill) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>Skill not found</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
