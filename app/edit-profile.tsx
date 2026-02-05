@@ -11,6 +11,7 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { useState } from 'react';
 import { X, Plus, Camera } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import Colors from '@/constants/colors';
 import { useCurrentUser } from '@/providers/current-user';
 import { trpc } from '@/lib/trpc';
@@ -75,6 +76,58 @@ export default function EditProfileScreen() {
     }
   };
 
+  const handleTakePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera permission is required to take photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        console.log('[EditProfile] Photo taken:', result.assets[0].uri);
+        setAvatarUrl(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('[EditProfile] Camera error:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Photo library permission is required to choose photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        console.log('[EditProfile] Photo selected:', result.assets[0].uri);
+        setAvatarUrl(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('[EditProfile] Image picker error:', error);
+      Alert.alert('Error', 'Failed to select photo. Please try again.');
+    }
+  };
+
   const handleChangeAvatar = () => {
     Alert.alert(
       'Change Avatar',
@@ -82,11 +135,11 @@ export default function EditProfileScreen() {
       [
         {
           text: 'Take Photo',
-          onPress: () => console.log('[EditProfile] Take photo'),
+          onPress: handleTakePhoto,
         },
         {
           text: 'Choose from Library',
-          onPress: () => console.log('[EditProfile] Choose from library'),
+          onPress: handleChooseFromLibrary,
         },
         {
           text: 'Cancel',
