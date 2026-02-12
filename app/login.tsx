@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Platform, Alert, ActivityIndicator, Image, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import Colors from '@/constants/colors';
 import { useRouter } from 'expo-router';
@@ -168,34 +169,34 @@ export default function LoginScreen() {
   const signInWithGoogle = useCallback(async () => {
     try {
       console.log('[Login] Google sign-in start');
-      const redirectUri = Platform.select({ web: window.location.origin, default: 'myapp://' }) as string;
-      const clientId = Platform.select<string | undefined>({
-        ios: process.env.EXPO_PUBLIC_GOOGLE_IOS_ID,
-        android: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_ID,
-        web: process.env.EXPO_PUBLIC_GOOGLE_WEB_ID,
-        default: undefined,
-      });
-      if (!clientId) {
-        console.warn('[Login] Missing Google client id envs');
-        Alert.alert('Configuration Error', 'Google OAuth is not configured');
-        return;
-      }
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
-        clientId ?? ''
-      )}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent('profile email')}`;
+
+      const redirectUri = AuthSession.makeRedirectUri({ preferLocalhost: false });
+      console.log('[Login] Google redirect URI:', redirectUri);
+
+      const clientId = '1031049540017-r0hjjjsdn3a5fkrl03kp2q9fi98dop6v.apps.googleusercontent.com';
+
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth` +
+        `?client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=token` +
+        `&scope=${encodeURIComponent('profile email')}`;
 
       const res = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+      console.log('[Login] Google auth result type:', res.type);
+
       if (res.type === 'success' && res.url) {
         const hash = res.url.split('#')[1] ?? '';
         const params = new URLSearchParams(hash);
         const token = params.get('access_token');
-        console.log('[Login] Google token received');
+        console.log('[Login] Google token received:', !!token);
         
         if (token) {
           const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
             headers: { Authorization: `Bearer ${token}` },
           });
           const userInfo = await userInfoResponse.json();
+          console.log('[Login] Google user info:', userInfo.email);
           
           await auth.signInWithOAuth('google', {
             providerId: userInfo.id,
