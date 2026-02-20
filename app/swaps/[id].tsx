@@ -127,6 +127,11 @@ export default function SwapDetailScreen() {
     return skillsMap.get(offeredId);
   }, [currentUser.id, skillsMap, swap]);
 
+  const isRecipient = useMemo(() => {
+    if (!swap) return false;
+    return swap.recipientId === currentUser.id;
+  }, [swap, currentUser.id]);
+
   const headerCopy = useMemo(() => {
     if (!swap) {
       return undefined;
@@ -216,6 +221,25 @@ export default function SwapDetailScreen() {
     console.log('[SwapDetail] Accepting slot', { swapId: swap.id, slotId });
     acceptProposal({ requestId: swap.id, timeId: slotId });
   }, [acceptProposal, swap]);
+
+  const handleAcceptSwap = useCallback(() => {
+    if (!swap) return;
+    console.log('[SwapDetail] Accepting swap request', { swapId: swap.id });
+    const firstPendingSlot = swap.proposedTimes.find((t) => t.status === 'pending');
+    if (firstPendingSlot) {
+      acceptProposal({ requestId: swap.id, timeId: firstPendingSlot.id });
+    } else {
+      addCounterProposal({
+        requestId: swap.id,
+        proposerId: currentUser.id,
+        slots: [{
+          startISO: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          endISO: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(),
+        }],
+        message: 'Accepted! Let\'s finalize the schedule.',
+      });
+    }
+  }, [acceptProposal, addCounterProposal, currentUser.id, swap]);
 
   const handleDeclineSwap = useCallback(() => {
     if (!swap) {
@@ -377,6 +401,37 @@ export default function SwapDetailScreen() {
             <Text style={styles.heroBadgeText}>{swap.status.toUpperCase()}</Text>
           </View>
         </LinearGradient>
+
+        {swap.status === 'pending' && isRecipient && (
+          <View style={styles.acceptSwapSection}>
+            <View style={styles.acceptSwapCard}>
+              <Text style={styles.acceptSwapTitle}>You received a swap request</Text>
+              <Text style={styles.acceptSwapDesc}>
+                {partner?.name ?? 'Someone'} wants to exchange skills with you. Accept to lock in a session or decline to pass.
+              </Text>
+              <View style={styles.acceptSwapActions}>
+                <TouchableOpacity
+                  style={styles.acceptSwapButton}
+                  onPress={handleAcceptSwap}
+                  activeOpacity={0.85}
+                  testID="accept-swap-request"
+                >
+                  <Check size={18} color="#0B1220" />
+                  <Text style={styles.acceptSwapButtonText}>Accept Swap</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.declineSwapButton}
+                  onPress={handleDeclineSwap}
+                  activeOpacity={0.85}
+                  testID="decline-swap-request"
+                >
+                  <X size={18} color="#DC2626" />
+                  <Text style={styles.declineSwapButtonText}>Decline</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
 
         {errorBanner && (
           <View style={styles.errorBanner} testID="swap-error">
@@ -1041,6 +1096,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700' as const,
     color: '#3B82F6',
+  },
+  acceptSwapSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  acceptSwapCard: {
+    backgroundColor: 'rgba(52, 211, 153, 0.08)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(52, 211, 153, 0.3)',
+    borderRadius: 20,
+    padding: 20,
+    gap: 14,
+  },
+  acceptSwapTitle: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  acceptSwapDesc: {
+    fontSize: 14,
+    color: Colors.light.textSecondary,
+    lineHeight: 20,
+  },
+  acceptSwapActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  acceptSwapButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#34D399',
+    paddingVertical: 14,
+    borderRadius: 16,
+  },
+  acceptSwapButtonText: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#0B1220',
+  },
+  declineSwapButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(220, 38, 38, 0.3)',
+    paddingVertical: 14,
+    borderRadius: 16,
+  },
+  declineSwapButtonText: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#DC2626',
   },
   bottomSpacer: {
     height: 40,
