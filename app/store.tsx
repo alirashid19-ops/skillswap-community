@@ -15,34 +15,9 @@ const creditPackages = [
 ];
 
 const premiumTiers = [
-  {
-    id: 'basic' as const,
-    name: 'Basic',
-    monthlyPrice: 199,
-    yearlyPrice: 1999,
-    monthlyCredits: 30,
-    features: ['Priority matching', 'Ad-free experience', 'Basic analytics'],
-    color: '#6366F1',
-  },
-  {
-    id: 'premium' as const,
-    name: 'Premium',
-    monthlyPrice: 399,
-    yearlyPrice: 3999,
-    monthlyCredits: 80,
-    features: ['All Basic features', 'Unlimited swaps', 'Advanced matching', 'Video calls'],
-    color: '#8B5CF6',
-    popular: true,
-  },
-  {
-    id: 'elite' as const,
-    name: 'Elite',
-    monthlyPrice: 999,
-    yearlyPrice: 9999,
-    monthlyCredits: 200,
-    features: ['All Premium features', 'Concierge support', 'Exclusive events', 'Expert badge'],
-    color: '#F59E0B',
-  },
+  { id: 'basic' as const, name: 'Basic', monthlyPrice: 199, yearlyPrice: 1999, monthlyCredits: 30, features: ['Priority matching', 'Ad-free experience', 'Basic analytics'], color: '#6366F1' },
+  { id: 'premium' as const, name: 'Premium', monthlyPrice: 399, yearlyPrice: 3999, monthlyCredits: 80, features: ['All Basic features', 'Unlimited swaps', 'Advanced matching', 'Video calls'], color: '#8B5CF6', popular: true },
+  { id: 'elite' as const, name: 'Elite', monthlyPrice: 999, yearlyPrice: 9999, monthlyCredits: 200, features: ['All Premium features', 'Concierge support', 'Exclusive events', 'Expert badge'], color: '#F59E0B' },
 ];
 
 export default function StoreScreen() {
@@ -52,602 +27,150 @@ export default function StoreScreen() {
   const utils = trpc.useUtils();
 
   const purchaseCreditsMutation = trpc.credits.purchaseCredits.useMutation({
-    onSuccess: (data) => {
-      Alert.alert('Success!', `${data.creditsAdded} credits added to your account!`);
-      // Credits updated on backend, refetch will update UI
-      utils.credits.getBalance.invalidate();
-    },
-    onError: (error) => {
-      Alert.alert('Error', error.message);
-    },
+    onSuccess: (data) => { Alert.alert('Success!', `${data.creditsAdded} credits added!`); utils.credits.getBalance.invalidate(); },
+    onError: (error) => { Alert.alert('Error', error.message); },
   });
 
   const purchasePremiumMutation = trpc.credits.purchasePremium.useMutation({
-    onSuccess: (data) => {
-      Alert.alert('Success!', `Welcome to ${data.tier} tier! ${data.creditsAdded} bonus credits added!`);
-      // Premium tier updated on backend, refetch will update UI
-      utils.credits.getBalance.invalidate();
-    },
-    onError: (error) => {
-      Alert.alert('Error', error.message);
-    },
+    onSuccess: (data) => { Alert.alert('Success!', `Welcome to ${data.tier}! ${data.creditsAdded} bonus credits added!`); utils.credits.getBalance.invalidate(); },
+    onError: (error) => { Alert.alert('Error', error.message); },
   });
 
   const handlePurchaseCredits = (packageId: typeof creditPackages[number]['id']) => {
     const pkg = creditPackages.find((p) => p.id === packageId);
     if (!pkg) return;
-
-    Alert.alert(
-      'Purchase Credits',
-      `Buy ${pkg.credits} credits for ${formatPrice(pkg.price)}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Buy',
-          onPress: () => {
-            purchaseCreditsMutation.mutate({ packageId });
-          },
-        },
-      ]
-    );
+    Alert.alert('Purchase Credits', `Buy ${pkg.credits} credits for ${formatPrice(pkg.price)}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Buy', onPress: () => purchaseCreditsMutation.mutate({ packageId }) },
+    ]);
   };
 
   const handlePurchasePremium = (tier: typeof premiumTiers[number]['id']) => {
     const tierInfo = premiumTiers.find((t) => t.id === tier);
     if (!tierInfo) return;
-
     const price = selectedDuration === 'monthly' ? tierInfo.monthlyPrice : tierInfo.yearlyPrice;
-
-    Alert.alert(
-      `Upgrade to ${tierInfo.name}`,
-      `Subscribe for ${formatPrice(price)}/${selectedDuration}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Subscribe',
-          onPress: () => {
-            purchasePremiumMutation.mutate({ tier, duration: selectedDuration });
-          },
-        },
-      ]
-    );
+    Alert.alert(`Upgrade to ${tierInfo.name}`, `Subscribe for ${formatPrice(price)}/${selectedDuration}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Subscribe', onPress: () => purchasePremiumMutation.mutate({ tier, duration: selectedDuration }) },
+    ]);
   };
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen
-        options={{
-          title: 'Store',
-          headerStyle: {
-            backgroundColor: Colors.light.background,
-          },
-          headerTitleStyle: {
-            fontSize: 18,
-            fontWeight: '700',
-            color: Colors.light.text,
-          },
-        }}
-      />
-
-      <View style={styles.header}>
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceIcon}>
-            <Coins size={24} color="#F59E0B" />
-          </View>
-          <View style={styles.balanceInfo}>
-            <Text style={styles.balanceLabel}>Your Balance</Text>
-            <Text style={styles.balanceAmount}>{user?.credits || 0} Credits</Text>
+    <View style={s.container}>
+      <Stack.Screen options={{ title: 'Store', headerStyle: { backgroundColor: Colors.light.background }, headerTitleStyle: { fontSize: 18, fontWeight: '700', color: Colors.light.text } }} />
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 }}>
+        <View style={s.balanceCard}>
+          <View style={s.balanceIcon}><Coins size={24} color="#F59E0B" /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, color: Colors.light.textSecondary, marginBottom: 2 }}>Your Balance</Text>
+            <Text style={{ fontSize: 24, fontWeight: '700' as const, color: Colors.light.text }}>{user?.credits || 0} Credits</Text>
           </View>
         </View>
       </View>
-
-      <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'credits' && styles.tabActive]}
-          onPress={() => setSelectedTab('credits')}
-        >
+      <View style={s.tabs}>
+        <TouchableOpacity style={[s.tab, selectedTab === 'credits' && s.tabActive]} onPress={() => setSelectedTab('credits')}>
           <Coins size={20} color={selectedTab === 'credits' ? Colors.light.primary : Colors.light.textSecondary} />
-          <Text style={[styles.tabText, selectedTab === 'credits' && styles.tabTextActive]}>Buy Credits</Text>
+          <Text style={[s.tabText, selectedTab === 'credits' && s.tabTextActive]}>Buy Credits</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'premium' && styles.tabActive]}
-          onPress={() => setSelectedTab('premium')}
-        >
+        <TouchableOpacity style={[s.tab, selectedTab === 'premium' && s.tabActive]} onPress={() => setSelectedTab('premium')}>
           <Crown size={20} color={selectedTab === 'premium' ? Colors.light.primary : Colors.light.textSecondary} />
-          <Text style={[styles.tabText, selectedTab === 'premium' && styles.tabTextActive]}>Premium</Text>
+          <Text style={[s.tabText, selectedTab === 'premium' && s.tabTextActive]}>Premium</Text>
         </TouchableOpacity>
       </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         {selectedTab === 'credits' ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Credit Packages</Text>
-            <Text style={styles.sectionDescription}>
-              Use credits to request skill swaps and unlock premium features
-            </Text>
-            <View style={styles.packagesGrid}>
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Credit Packages</Text>
+            <Text style={s.sectionDesc}>Use credits to request skill swaps and unlock premium features</Text>
+            <View style={s.packagesGrid}>
               {creditPackages.map((pkg) => (
-                <View key={pkg.id} style={styles.packageCard}>
-                  {pkg.popular && (
-                    <View style={styles.popularBadge}>
-                      <Zap size={12} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text style={styles.popularText}>POPULAR</Text>
-                    </View>
-                  )}
-                  <View style={styles.packageIcon}>
-                    <Coins size={32} color={Colors.light.primary} />
-                  </View>
-                  <Text style={styles.packageCredits}>{pkg.credits}</Text>
-                  <Text style={styles.packageLabel}>Credits</Text>
-                  <View style={styles.packageDivider} />
-                  <Text style={styles.packagePrice}>{formatPrice(pkg.price)}</Text>
-                  <TouchableOpacity
-                    style={[
-                      styles.packageButton,
-                      purchaseCreditsMutation.isPending && styles.packageButtonDisabled,
-                    ]}
-                    onPress={() => handlePurchaseCredits(pkg.id)}
-                    disabled={purchaseCreditsMutation.isPending}
-                  >
-                    <Text style={styles.packageButtonText}>
-                      {purchaseCreditsMutation.isPending ? 'Processing...' : 'Buy Now'}
-                    </Text>
+                <View key={pkg.id} style={s.packageCard}>
+                  {pkg.popular && <View style={s.popularBadge}><Zap size={12} color="#FFF" fill="#FFF" /><Text style={{ fontSize: 10, fontWeight: '700' as const, color: '#FFF', letterSpacing: 0.5 }}>POPULAR</Text></View>}
+                  <View style={s.packageIcon}><Coins size={32} color={Colors.light.primary} /></View>
+                  <Text style={{ fontSize: 28, fontWeight: '700' as const, color: Colors.light.text }}>{pkg.credits}</Text>
+                  <Text style={{ fontSize: 13, color: Colors.light.textSecondary, marginBottom: 12 }}>Credits</Text>
+                  <View style={{ width: '100%', height: 1, backgroundColor: Colors.light.borderLight, marginVertical: 12 }} />
+                  <Text style={{ fontSize: 20, fontWeight: '700' as const, color: Colors.light.primary, marginBottom: 12 }}>{formatPrice(pkg.price)}</Text>
+                  <TouchableOpacity style={[s.buyBtn, purchaseCreditsMutation.isPending && { opacity: 0.6 }]} onPress={() => handlePurchaseCredits(pkg.id)} disabled={purchaseCreditsMutation.isPending}>
+                    <Text style={{ fontSize: 14, fontWeight: '700' as const, color: '#FFF' }}>{purchaseCreditsMutation.isPending ? 'Processing...' : 'Buy Now'}</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           </View>
         ) : (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Premium Membership</Text>
-            <Text style={styles.sectionDescription}>
-              Unlock unlimited swaps, priority matching, and exclusive features
-            </Text>
-
-            <View style={styles.durationSelector}>
-              <TouchableOpacity
-                style={[
-                  styles.durationOption,
-                  selectedDuration === 'monthly' && styles.durationOptionActive,
-                ]}
-                onPress={() => setSelectedDuration('monthly')}
-              >
-                <Text
-                  style={[
-                    styles.durationText,
-                    selectedDuration === 'monthly' && styles.durationTextActive,
-                  ]}
-                >
-                  Monthly
-                </Text>
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Premium Membership</Text>
+            <Text style={s.sectionDesc}>Unlock unlimited swaps, priority matching, and exclusive features</Text>
+            <View style={s.durationSelector}>
+              <TouchableOpacity style={[s.durationOpt, selectedDuration === 'monthly' && s.durationOptActive]} onPress={() => setSelectedDuration('monthly')}>
+                <Text style={[s.durationText, selectedDuration === 'monthly' && s.durationTextActive]}>Monthly</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.durationOption,
-                  selectedDuration === 'yearly' && styles.durationOptionActive,
-                ]}
-                onPress={() => setSelectedDuration('yearly')}
-              >
-                <Text
-                  style={[
-                    styles.durationText,
-                    selectedDuration === 'yearly' && styles.durationTextActive,
-                  ]}
-                >
-                  Yearly
-                </Text>
-                <View style={styles.saveBadge}>
-                  <Text style={styles.saveText}>Save 17%</Text>
-                </View>
+              <TouchableOpacity style={[s.durationOpt, selectedDuration === 'yearly' && s.durationOptActive]} onPress={() => setSelectedDuration('yearly')}>
+                <Text style={[s.durationText, selectedDuration === 'yearly' && s.durationTextActive]}>Yearly</Text>
+                <View style={s.saveBadge}><Text style={{ fontSize: 11, fontWeight: '700' as const, color: '#FFF' }}>Save 17%</Text></View>
               </TouchableOpacity>
             </View>
-
-            <View style={styles.tiersContainer}>
+            <View style={{ gap: 16, marginBottom: 20 }}>
               {premiumTiers.map((tier) => (
-                <View
-                  key={tier.id}
-                  style={[
-                    styles.tierCard,
-                    tier.popular && styles.tierCardPopular,
-                  ]}
-                >
-                  {tier.popular && (
-                    <View style={styles.tierPopularBadge}>
-                      <Crown size={14} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text style={styles.tierPopularText}>MOST POPULAR</Text>
-                    </View>
-                  )}
-                  <View style={[styles.tierIcon, { backgroundColor: tier.color }]}>
-                    <Crown size={28} color="#FFFFFF" />
+                <View key={tier.id} style={[s.tierCard, tier.popular && { borderWidth: 2, borderColor: Colors.light.primary }]}>
+                  {tier.popular && <View style={s.tierPopularBadge}><Crown size={14} color="#FFF" fill="#FFF" /><Text style={{ fontSize: 12, fontWeight: '700' as const, color: '#FFF', letterSpacing: 0.5 }}>MOST POPULAR</Text></View>}
+                  <View style={[s.tierIcon, { backgroundColor: tier.color }]}><Crown size={28} color="#FFF" /></View>
+                  <Text style={{ fontSize: 24, fontWeight: '700' as const, color: Colors.light.text, marginBottom: 8 }}>{tier.name}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', marginBottom: 12 }}>
+                    <Text style={{ fontSize: 36, fontWeight: '700' as const, color: Colors.light.text }}>{formatPrice(selectedDuration === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice)}</Text>
+                    <Text style={{ fontSize: 16, color: Colors.light.textSecondary, marginLeft: 4 }}>/{selectedDuration === 'monthly' ? 'mo' : 'yr'}</Text>
                   </View>
-                  <Text style={styles.tierName}>{tier.name}</Text>
-                  <View style={styles.tierPriceContainer}>
-                    <Text style={styles.tierPrice}>
-                      {formatPrice(selectedDuration === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice)}
-                    </Text>
-                    <Text style={styles.tierPricePeriod}>/{selectedDuration === 'monthly' ? 'mo' : 'yr'}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F9FAFB', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 20, alignSelf: 'flex-start' }}>
+                    <Coins size={16} color={tier.color} /><Text style={{ fontSize: 14, fontWeight: '600' as const, color: Colors.light.text }}>{tier.monthlyCredits} credits/month</Text>
                   </View>
-                  <View style={styles.tierCreditsInfo}>
-                    <Coins size={16} color={tier.color} />
-                    <Text style={styles.tierCreditsText}>{tier.monthlyCredits} credits/month</Text>
-                  </View>
-                  <View style={styles.tierFeatures}>
-                    {tier.features.map((feature, index) => (
-                      <View key={index} style={styles.tierFeature}>
-                        <Check size={18} color={tier.color} strokeWidth={2.5} />
-                        <Text style={styles.tierFeatureText}>{feature}</Text>
+                  <View style={{ gap: 12, marginBottom: 24 }}>
+                    {tier.features.map((feature, i) => (
+                      <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Check size={18} color={tier.color} strokeWidth={2.5} /><Text style={{ fontSize: 15, color: Colors.light.text, flex: 1 }}>{feature}</Text>
                       </View>
                     ))}
                   </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.tierButton,
-                      { backgroundColor: tier.color },
-                      purchasePremiumMutation.isPending && styles.tierButtonDisabled,
-                    ]}
-                    onPress={() => handlePurchasePremium(tier.id)}
-                    disabled={purchasePremiumMutation.isPending}
-                  >
-                    <Text style={styles.tierButtonText}>
-                      {purchasePremiumMutation.isPending ? 'Processing...' : 'Subscribe'}
-                    </Text>
+                  <TouchableOpacity style={[{ paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: tier.color }, purchasePremiumMutation.isPending && { opacity: 0.6 }]} onPress={() => handlePurchasePremium(tier.id)} disabled={purchasePremiumMutation.isPending}>
+                    <Text style={{ fontSize: 16, fontWeight: '700' as const, color: '#FFF' }}>{purchasePremiumMutation.isPending ? 'Processing...' : 'Subscribe'}</Text>
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           </View>
         )}
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            This is a demo payment system. No actual charges will be made.
-          </Text>
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, color: Colors.light.textSecondary, textAlign: 'center', fontStyle: 'italic' }}>This is a demo payment system. No actual charges will be made.</Text>
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  balanceCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 16,
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  balanceIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  balanceInfo: {
-    flex: 1,
-  },
-  balanceLabel: {
-    fontSize: 13,
-    color: Colors.light.textSecondary,
-    marginBottom: 2,
-  },
-  balanceAmount: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: Colors.light.text,
-  },
-  tabs: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    gap: 12,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.light.borderLight,
-  },
-  tabActive: {
-    backgroundColor: Colors.light.primaryLight,
-    borderColor: Colors.light.primary,
-  },
-  tabText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.light.textSecondary,
-  },
-  tabTextActive: {
-    color: Colors.light.primary,
-  },
-  content: {
-    flex: 1,
-  },
-  section: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: '700' as const,
-    color: Colors.light.text,
-    marginBottom: 8,
-  },
-  sectionDescription: {
-    fontSize: 15,
-    color: Colors.light.textSecondary,
-    marginBottom: 20,
-    lineHeight: 22,
-  },
-  packagesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
-  },
-  packageCard: {
-    width: '48%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-    position: 'relative',
-  },
-  popularBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.light.accent,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  popularText: {
-    fontSize: 10,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  packageIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.light.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  packageCredits: {
-    fontSize: 28,
-    fontWeight: '700' as const,
-    color: Colors.light.text,
-  },
-  packageLabel: {
-    fontSize: 13,
-    color: Colors.light.textSecondary,
-    marginBottom: 12,
-  },
-  packageDivider: {
-    width: '100%',
-    height: 1,
-    backgroundColor: Colors.light.borderLight,
-    marginVertical: 12,
-  },
-  packagePrice: {
-    fontSize: 20,
-    fontWeight: '700' as const,
-    color: Colors.light.primary,
-    marginBottom: 12,
-  },
-  packageButton: {
-    width: '100%',
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  packageButtonDisabled: {
-    opacity: 0.6,
-  },
-  packageButtonText: {
-    fontSize: 14,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-  },
-  durationSelector: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  durationOption: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: Colors.light.borderLight,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  durationOptionActive: {
-    borderColor: Colors.light.primary,
-    backgroundColor: Colors.light.primaryLight,
-  },
-  durationText: {
-    fontSize: 15,
-    fontWeight: '600' as const,
-    color: Colors.light.textSecondary,
-  },
-  durationTextActive: {
-    color: Colors.light.primary,
-  },
-  saveBadge: {
-    position: 'absolute',
-    top: -8,
-    right: 12,
-    backgroundColor: Colors.light.accent,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  saveText: {
-    fontSize: 11,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-  },
-  tiersContainer: {
-    gap: 16,
-    marginBottom: 20,
-  },
-  tierCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: Colors.light.shadow,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-    position: 'relative',
-  },
-  tierCardPopular: {
-    borderWidth: 2,
-    borderColor: Colors.light.primary,
-  },
-  tierPopularBadge: {
-    position: 'absolute',
-    top: -12,
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: Colors.light.primary,
-    paddingVertical: 6,
-    borderRadius: 8,
-    shadowColor: Colors.light.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  tierPopularText: {
-    fontSize: 12,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  tierIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  tierName: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: Colors.light.text,
-    marginBottom: 8,
-  },
-  tierPriceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 12,
-  },
-  tierPrice: {
-    fontSize: 36,
-    fontWeight: '700' as const,
-    color: Colors.light.text,
-  },
-  tierPricePeriod: {
-    fontSize: 16,
-    color: Colors.light.textSecondary,
-    marginLeft: 4,
-  },
-  tierCreditsInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginBottom: 20,
-    alignSelf: 'flex-start',
-  },
-  tierCreditsText: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: Colors.light.text,
-  },
-  tierFeatures: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  tierFeature: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  tierFeatureText: {
-    fontSize: 15,
-    color: Colors.light.text,
-    flex: 1,
-  },
-  tierButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  tierButtonDisabled: {
-    opacity: 0.6,
-  },
-  tierButtonText: {
-    fontSize: 16,
-    fontWeight: '700' as const,
-    color: '#FFFFFF',
-  },
-  footer: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 13,
-    color: Colors.light.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  balanceCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', padding: 16, borderRadius: 16, shadowColor: Colors.light.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
+  balanceIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  tabs: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 16, gap: 12 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, backgroundColor: '#FFF', borderRadius: 12, borderWidth: 1, borderColor: Colors.light.borderLight },
+  tabActive: { backgroundColor: Colors.light.primaryLight, borderColor: Colors.light.primary },
+  tabText: { fontSize: 15, fontWeight: '600' as const, color: Colors.light.textSecondary },
+  tabTextActive: { color: Colors.light.primary },
+  section: { paddingHorizontal: 20, paddingTop: 24 },
+  sectionTitle: { fontSize: 22, fontWeight: '700' as const, color: Colors.light.text, marginBottom: 8 },
+  sectionDesc: { fontSize: 15, color: Colors.light.textSecondary, marginBottom: 20, lineHeight: 22 },
+  packagesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
+  packageCard: { width: '48%', backgroundColor: '#FFF', borderRadius: 16, padding: 16, alignItems: 'center', shadowColor: Colors.light.shadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 2, position: 'relative' },
+  popularBadge: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: Colors.light.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  packageIcon: { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.light.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  buyBtn: { width: '100%', backgroundColor: Colors.light.primary, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
+  durationSelector: { flexDirection: 'row', gap: 12, marginBottom: 24 },
+  durationOpt: { flex: 1, backgroundColor: '#FFF', borderWidth: 2, borderColor: Colors.light.borderLight, borderRadius: 12, paddingVertical: 14, alignItems: 'center', position: 'relative' },
+  durationOptActive: { borderColor: Colors.light.primary, backgroundColor: Colors.light.primaryLight },
+  durationText: { fontSize: 15, fontWeight: '600' as const, color: Colors.light.textSecondary },
+  durationTextActive: { color: Colors.light.primary },
+  saveBadge: { position: 'absolute', top: -8, right: 12, backgroundColor: Colors.light.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  tierCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 20, shadowColor: Colors.light.shadow, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 4, position: 'relative' },
+  tierPopularBadge: { position: 'absolute', top: -12, left: 20, right: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: Colors.light.primary, paddingVertical: 6, borderRadius: 8 },
+  tierIcon: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
 });

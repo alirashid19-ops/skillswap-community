@@ -73,12 +73,7 @@ function RootLayoutNav() {
           presentation: 'card',
         }}
       />
-      <Stack.Screen
-        name="feature-audit"
-        options={{
-          headerShown: false,
-        }}
-      />
+
       <Stack.Screen
         name="store"
         options={{
