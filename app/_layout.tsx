@@ -12,6 +12,7 @@ import { SkillSwapsProvider } from "../providers/skill-swaps";
 import { NotificationsProvider } from "../providers/notifications";
 import { ResourcesProvider } from "../providers/resources";
 import { OnboardingProvider } from "../providers/onboarding";
+import { AdminProvider } from "../providers/admin";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -91,6 +92,40 @@ function RootLayoutNav() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="admin/index"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="admin/users"
+        options={{
+          headerShown: true,
+          title: 'User Management',
+        }}
+      />
+      <Stack.Screen
+        name="admin/reviews"
+        options={{
+          headerShown: true,
+          title: 'Review Moderation',
+        }}
+      />
+      <Stack.Screen
+        name="admin/swaps"
+        options={{
+          headerShown: true,
+          title: 'Swap Oversight',
+        }}
+      />
+      <Stack.Screen
+        name="admin/verifications"
+        options={{
+          headerShown: true,
+          title: 'Verifications',
+        }}
+      />
     </Stack>
   );
 }
@@ -109,11 +144,13 @@ export default function RootLayout() {
               <SkillSwapsProvider>
                 <NotificationsProvider>
                   <ResourcesProvider>
-                    <ErrorBoundary>
+                    <AdminProvider>
+                      <ErrorBoundary>
                       <GestureHandlerRootView style={styles.container}>
                         <RootLayoutNav />
                       </GestureHandlerRootView>
-                    </ErrorBoundary>
+                      </ErrorBoundary>
+                    </AdminProvider>
                   </ResourcesProvider>
                 </NotificationsProvider>
               </SkillSwapsProvider>

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -177,6 +177,21 @@ export default function ProfileScreen() {
               <Text style={styles.signOutButtonText}>Sign Out</Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={styles.adminButton}
+            onPress={() => router.push('/admin' as any)}
+            activeOpacity={0.7}
+            testID="admin-panel-button"
+          >
+            <View style={styles.adminIconWrap}>
+              <Settings size={20} color="#FFFFFF" />
+            </View>
+            <View style={styles.adminTextWrap}>
+              <Text style={styles.adminTitle}>Admin Panel</Text>
+              <Text style={styles.adminSubtitle}>Manage users, reviews & more</Text>
+            </View>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.restartOnboardingButton}
@@ -678,6 +693,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.light.text,
+  },
+  adminButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    gap: 14,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  adminIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
+    backgroundColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adminTextWrap: {
+    flex: 1,
+  },
+  adminTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#F8FAFC',
+  },
+  adminSubtitle: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 2,
   },
   restartOnboardingButton: {
     flexDirection: 'row',
