@@ -66,6 +66,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="add-skill"
+        options={{
+          headerShown: true,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
         name="feature-audit"
         options={{
           headerShown: false,

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -196,9 +196,14 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Skills I Offer</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{currentUser.skillsOffered.length}</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.addSkillButton}
+                onPress={() => router.push('/add-skill')}
+                activeOpacity={0.7}
+              >
+                <Plus size={16} color="#FFFFFF" />
+                <Text style={styles.addSkillButtonText}>Add Skill</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.skillsGrid}>
               {currentUser.skillsOffered.map((skill) => (
@@ -234,9 +239,14 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Want to Learn</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{currentUser.skillsWanted.length}</Text>
-              </View>
+              <TouchableOpacity
+                style={styles.addWantButton}
+                onPress={() => router.push('/edit-profile')}
+                activeOpacity={0.7}
+              >
+                <Plus size={14} color={Colors.light.primary} />
+                <Text style={styles.addWantButtonText}>Edit</Text>
+              </TouchableOpacity>
             </View>
             <View style={styles.wantsList}>
               {currentUser.skillsWanted.map((skill, index) => (
@@ -559,16 +569,35 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: Colors.light.text,
   },
-  badge: {
+  addSkillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: Colors.light.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 12,
   },
-  badgeText: {
-    fontSize: 13,
+  addSkillButtonText: {
+    fontSize: 14,
     fontWeight: '700' as const,
     color: '#FFFFFF',
+  },
+  addWantButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.light.primaryLight + '20',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.primaryLight,
+  },
+  addWantButtonText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: Colors.light.primary,
   },
   bioContainer: {
     backgroundColor: Colors.light.card,
