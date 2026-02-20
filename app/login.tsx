@@ -65,7 +65,7 @@ export default function LoginScreen() {
     }
     try {
       await auth.signInWithOtp(identifier, code);
-      router.replace('/home');
+      router.replace('/home' as any);
     } catch (e) {
       console.error('[Login] verify error', e);
       setError('Invalid or expired code');
@@ -81,7 +81,7 @@ export default function LoginScreen() {
     }
     try {
       await auth.signIn(identifier, password);
-      router.replace('/home');
+      router.replace('/home' as any);
     } catch (e: any) {
       console.error('[Login] sign in error', e);
       setError(e.message || 'Invalid email or password');
@@ -101,7 +101,7 @@ export default function LoginScreen() {
     }
     try {
       await auth.signUp(identifier, password, name);
-      router.replace('/home');
+      router.replace('/home' as any);
     } catch (e: any) {
       console.error('[Login] sign up error', e);
       setError(e.message || 'Could not create account');
@@ -153,7 +153,7 @@ export default function LoginScreen() {
         name,
       });
       
-      router.replace('/home');
+      router.replace('/home' as any);
     } catch (e: any) {
       if (e && typeof e === 'object' && 'code' in e) {
         if (e.code === 'ERR_REQUEST_CANCELED') {
@@ -205,7 +205,7 @@ export default function LoginScreen() {
             avatar: userInfo.picture,
           });
           
-          router.replace('/home');
+          router.replace('/home' as any);
         }
       } else if (res.type === 'cancel') {
         console.log('[Login] Google canceled');
@@ -576,7 +576,7 @@ export default function LoginScreen() {
               By continuing you agree to our Terms and Privacy Policy
             </Text>
 
-            <TouchableOpacity testID="skip" onPress={() => router.replace('/home')} style={styles.skipButton}>
+            <TouchableOpacity testID="skip" onPress={() => router.replace('/home' as any)} style={styles.skipButton}>
               <Text style={styles.skipText}>Skip for now</Text>
             </TouchableOpacity>
           </View>

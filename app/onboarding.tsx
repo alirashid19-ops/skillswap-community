@@ -75,7 +75,7 @@ export default function OnboardingScreen() {
   const handleComplete = async () => {
     console.log('[Onboarding] Completing with final data');
     await completeOnboarding();
-    router.replace('/(tabs)/home');
+    router.replace('/(tabs)/home' as any);
   };
 
   const canContinue = () => {

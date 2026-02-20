@@ -18,14 +18,14 @@ export default function Index() {
   }
 
   if (!isAuthenticated) {
-    return <Redirect href="/login" />;
+    return <Redirect href={"/login" as any} />;
   }
 
   if (!hasCompletedOnboarding) {
-    return <Redirect href="/onboarding" />;
+    return <Redirect href={"/onboarding" as any} />;
   }
 
-  return <Redirect href="/home" />;
+  return <Redirect href={"/home" as any} />;
 }
 
 const styles = StyleSheet.create({

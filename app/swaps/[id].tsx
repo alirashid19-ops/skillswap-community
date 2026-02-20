@@ -592,7 +592,7 @@ export default function SwapDetailScreen() {
             <View style={styles.callActions}>
               <TouchableOpacity
                 style={[styles.callButton, styles.videoCallButton]}
-                onPress={() => router.push(`/call/${swap.id}`)}
+                onPress={() => router.push(`/call/${swap.id}` as any)}
                 activeOpacity={0.9}
                 testID="start-video-call"
               >
@@ -601,7 +601,7 @@ export default function SwapDetailScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.callButton, styles.voiceCallButton]}
-                onPress={() => router.push(`/call/${swap.id}`)}
+                onPress={() => router.push(`/call/${swap.id}` as any)}
                 activeOpacity={0.9}
                 testID="start-voice-call"
               >

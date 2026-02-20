@@ -27,13 +27,13 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     console.log('[Profile] Signing out');
     await auth.signOut();
-    router.replace('/login');
+    router.replace('/login' as any);
   };
 
   const handleRestartOnboarding = async () => {
     console.log('[Profile] Restarting onboarding');
     await resetOnboarding();
-    router.replace('/onboarding');
+    router.replace('/onboarding' as any);
   };
 
   return (
@@ -69,7 +69,7 @@ export default function ProfileScreen() {
           {verifications && verifications.trustScore > 0 && (
             <TouchableOpacity 
               style={styles.trustScoreContainer}
-              onPress={() => router.push('/verification')}
+              onPress={() => router.push('/verification' as any)}
               activeOpacity={0.7}
             >
               <TrustScoreBadge score={verifications.trustScore} size="small" showLabel={false} />
@@ -96,7 +96,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity 
             style={styles.creditsCard}
-            onPress={() => router.push('/store')}
+            onPress={() => router.push('/store' as any)}
           >
             <View style={styles.creditsLeft}>
               <View style={styles.creditsIcon}>
@@ -139,7 +139,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.verificationCard}
-            onPress={() => router.push('/verification')}
+            onPress={() => router.push('/verification' as any)}
             activeOpacity={0.7}
           >
             <View style={styles.verificationIcon}>
@@ -165,7 +165,7 @@ export default function ProfileScreen() {
           <View style={styles.buttonRow}>
             <TouchableOpacity 
               style={styles.editButton}
-              onPress={() => router.push('/edit-profile')}
+              onPress={() => router.push('/edit-profile' as any)}
             >
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
               <Text style={styles.sectionTitle}>Skills I Offer</Text>
               <TouchableOpacity
                 style={styles.addSkillButton}
-                onPress={() => router.push('/add-skill')}
+                onPress={() => router.push('/add-skill' as any)}
                 activeOpacity={0.7}
               >
                 <Plus size={16} color="#FFFFFF" />
@@ -241,7 +241,7 @@ export default function ProfileScreen() {
               <Text style={styles.sectionTitle}>Want to Learn</Text>
               <TouchableOpacity
                 style={styles.addWantButton}
-                onPress={() => router.push('/edit-profile')}
+                onPress={() => router.push('/edit-profile' as any)}
                 activeOpacity={0.7}
               >
                 <Plus size={14} color={Colors.light.primary} />
