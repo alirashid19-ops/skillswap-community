@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -5,25 +6,65 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, MessageCircle } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/colors';
-import { mockUsers } from '../../mocks/data';
+import { mockUsers, getSkillsWithUsers } from '../../mocks/data';
 import ReviewsSection from '../../components/ReviewsSection';
+import SkillSwapRequestModal from '../../components/SkillSwapRequestModal';
+import { useSkillSwaps } from '../../providers/skill-swaps';
+import { useCurrentUser } from '../../providers/current-user';
 import { trpc } from '../../lib/trpc';
+import type { SkillWithUser } from '../../types';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const user = mockUsers.find(u => u.id === id);
   const insets = useSafeAreaInsets();
+  const { swaps } = useSkillSwaps();
+  const { currentUser } = useCurrentUser();
+  const [swapModalVisible, setSwapModalVisible] = useState<boolean>(false);
+  const [selectedSkill, setSelectedSkill] = useState<SkillWithUser | null>(null);
   const reviewsSummary = trpc.reviews.list.useQuery({ revieweeId: id ?? '' }, {
     enabled: Boolean(id),
   });
   const averageRating = reviewsSummary.data?.stats.averageRating ?? user?.rating ?? 0;
   const totalReviews = reviewsSummary.data?.stats.totalReviews ?? 0;
+
+  const handleSendMessage = useCallback(() => {
+    if (!user || !currentUser) return;
+
+    const existingSwap = swaps.find(
+      (s) =>
+        (s.requesterId === currentUser.id && s.recipientId === user.id) ||
+        (s.requesterId === user.id && s.recipientId === currentUser.id)
+    );
+
+    if (existingSwap) {
+      console.log('[Profile] Navigating to existing swap:', existingSwap.id);
+      router.push(`/swaps/${existingSwap.id}` as any);
+      return;
+    }
+
+    const allSkills = getSkillsWithUsers();
+    const userSkills = allSkills.filter((s) => s.userId === user.id);
+
+    if (userSkills.length > 0) {
+      console.log('[Profile] Opening swap request modal for skill:', userSkills[0].id);
+      setSelectedSkill(userSkills[0]);
+      setSwapModalVisible(true);
+    } else {
+      Alert.alert(
+        'No Skills Available',
+        `${user.name} hasn't listed any skills yet. Check back later!`,
+        [{ text: 'OK' }]
+      );
+    }
+  }, [user, currentUser, swaps, router]);
 
   if (!user) {
     return (
@@ -77,7 +118,8 @@ export default function UserProfileScreen() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.messageButton}>
+          <TouchableOpacity style={styles.messageButton} onPress={handleSendMessage} activeOpacity={0.8}>
+            <MessageCircle size={18} color="#FFFFFF" />
             <Text style={styles.messageButtonText}>Send Message</Text>
           </TouchableOpacity>
         </View>
@@ -145,6 +187,17 @@ export default function UserProfileScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
+
+      {selectedSkill && (
+        <SkillSwapRequestModal
+          visible={swapModalVisible}
+          skill={selectedSkill}
+          onClose={() => {
+            setSwapModalVisible(false);
+            setSelectedSkill(null);
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -233,6 +286,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
   },
   messageButtonText: {
     fontSize: 16,
