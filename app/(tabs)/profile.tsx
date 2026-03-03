@@ -14,13 +14,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
+import { useCurrentUser } from '@/providers/current-user';
+import ReviewsSection from '@/components/ReviewsSection';
 import { TrustScoreBadge } from '@/components/TrustScoreBadge';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const auth = useAuth();
   const { resetOnboarding } = useOnboarding();
-  const currentUser = mockUsers[0];
+  const { currentUser } = useCurrentUser();
   const verificationsQuery = trpc.verification.getVerifications.useQuery();
   const verifications = verificationsQuery.data;
 
@@ -273,6 +275,13 @@ export default function ProfileScreen() {
                 </View>
               ))}
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <ReviewsSection
+              revieweeId={currentUser.id}
+              headline="Reviews You've Received"
+            />
           </View>
 
           <View style={styles.bottomSpacer} />
