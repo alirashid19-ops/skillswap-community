@@ -121,6 +121,41 @@ function RootLayoutNav() {
           title: 'Verifications',
         }}
       />
+      <Stack.Screen
+        name="help"
+        options={{
+          headerShown: true,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="terms"
+        options={{
+          headerShown: true,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="privacy"
+        options={{
+          headerShown: true,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="contact"
+        options={{
+          headerShown: true,
+          presentation: 'card',
+        }}
+      />
+      <Stack.Screen
+        name="about"
+        options={{
+          headerShown: true,
+          presentation: 'card',
+        }}
+      />
     </Stack>
   );
 }
