@@ -1,7 +1,15 @@
 import { useCallback, useMemo, useState } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockUsers } from '../mocks/data';
 import type { User, Review, SkillSwapRequest, UserVerifications, VerificationStatus } from '../types';
+
+const ADMIN_SESSION_KEY = '@skillswap/admin_session';
+
+const ADMIN_CREDENTIALS = {
+  email: 'admin@skillswap.app',
+  password: 'admin123',
+};
 
 export type BanStatus = 'active' | 'banned' | 'suspended';
 
@@ -37,6 +45,9 @@ interface AdminContextValue {
   users: AdminUser[];
   reviews: AdminReview[];
   verificationRequests: VerificationRequest[];
+  isAdminAuthenticated: boolean;
+  adminLogin: (email: string, password: string) => Promise<void>;
+  adminLogout: () => Promise<void>;
   banUser: (userId: string, reason: string) => void;
   unbanUser: (userId: string) => void;
   suspendUser: (userId: string, reason: string) => void;
@@ -204,6 +215,43 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(()
   const [users, setUsers] = useState<AdminUser[]>(seedAdminUsers);
   const [reviews, setReviews] = useState<AdminReview[]>(seedReviews);
   const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>(seedVerificationRequests);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
+
+  const adminLogin = useCallback(async (email: string, password: string) => {
+    console.log('[Admin] Login attempt', { email });
+    const normalizedEmail = email.trim().toLowerCase();
+    if (
+      normalizedEmail === ADMIN_CREDENTIALS.email &&
+      password === ADMIN_CREDENTIALS.password
+    ) {
+      await AsyncStorage.setItem(ADMIN_SESSION_KEY, 'true');
+      setIsAdminAuthenticated(true);
+      console.log('[Admin] Login successful');
+    } else {
+      console.warn('[Admin] Login failed - invalid credentials');
+      throw new Error('Invalid admin credentials');
+    }
+  }, []);
+
+  const adminLogout = useCallback(async () => {
+    console.log('[Admin] Logging out');
+    await AsyncStorage.removeItem(ADMIN_SESSION_KEY);
+    setIsAdminAuthenticated(false);
+  }, []);
+
+  // Restore admin session on mount
+  useMemo(() => {
+    (async () => {
+      try {
+        const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);
+        if (session === 'true') {
+          setIsAdminAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('[Admin] Failed to restore session:', error);
+      }
+    })();
+  }, []);
 
   const banUser = useCallback((userId: string, reason: string) => {
     console.log('[Admin] Banning user', { userId, reason });
@@ -274,6 +322,9 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(()
     users,
     reviews,
     verificationRequests,
+    isAdminAuthenticated,
+    adminLogin,
+    adminLogout,
     banUser,
     unbanUser,
     suspendUser,
@@ -283,5 +334,5 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(()
     approveVerification,
     rejectVerification,
     stats,
-  }), [users, reviews, verificationRequests, banUser, unbanUser, suspendUser, updateUserCredits, approveReview, rejectReview, approveVerification, rejectVerification, stats]);
+  }), [users, reviews, verificationRequests, isAdminAuthenticated, adminLogin, adminLogout, banUser, unbanUser, suspendUser, updateUserCredits, approveReview, rejectReview, approveVerification, rejectVerification, stats]);
 });

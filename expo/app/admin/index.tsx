@@ -9,6 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
 import {
   Users,
   MessageSquare,
@@ -27,7 +28,13 @@ import Colors from '@/constants/colors';
 export default function AdminDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { stats } = useAdmin();
+  const { stats, isAdminAuthenticated, adminLogout } = useAdmin();
+
+  useEffect(() => {
+    if (!isAdminAuthenticated) {
+      router.replace('/admin/login' as any);
+    }
+  }, [isAdminAuthenticated, router]);
 
   const navigateTo = useCallback((path: string) => {
     router.push(path as any);
@@ -77,6 +84,10 @@ export default function AdminDashboard() {
     },
   ];
 
+  if (!isAdminAuthenticated) {
+    return <View style={styles.container} />;
+  }
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -84,6 +95,16 @@ export default function AdminDashboard() {
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} testID="admin-back">
             <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              await adminLogout();
+              router.replace('/admin/login' as any);
+            }}
+            style={styles.logoutBtn}
+            testID="admin-logout"
+          >
+            <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
         <Text style={styles.headerTitle}>Admin Panel</Text>
@@ -185,6 +206,7 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 16,
   },
   backBtn: {
@@ -195,6 +217,17 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 15,
     fontWeight: '500' as const,
+  },
+  logoutBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#1E293B',
+    borderRadius: 10,
+  },
+  logoutText: {
+    color: '#F8FAFC',
+    fontSize: 13,
+    fontWeight: '600' as const,
   },
   headerTitle: {
     fontSize: 28,

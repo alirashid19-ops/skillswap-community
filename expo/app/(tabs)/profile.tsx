@@ -182,7 +182,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.adminButton}
-            onPress={() => router.push('/admin' as any)}
+            onPress={() => router.push('/admin/login' as any)}
             activeOpacity={0.7}
             testID="admin-panel-button"
           >
