@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +15,7 @@ import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
 import { useCurrentUser } from '@/providers/current-user';
+import { useEarnings } from '@/providers/earnings';
 import ReviewsSection from '@/components/ReviewsSection';
 import { TrustScoreBadge } from '@/components/TrustScoreBadge';
 
@@ -23,6 +24,8 @@ export default function ProfileScreen() {
   const auth = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { currentUser } = useCurrentUser();
+  const { getSummary } = useEarnings();
+  const earningsSummary = getSummary(currentUser.id);
   const verificationsQuery = trpc.verification.getVerifications.useQuery();
   const verifications = verificationsQuery.data;
 
@@ -113,6 +116,31 @@ export default function ProfileScreen() {
               <ShoppingBag size={18} color={Colors.light.primary} />
               <Text style={styles.creditsButtonText}>Top Up</Text>
             </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.earningsCard}
+            onPress={() => router.push('/earnings' as any)}
+            activeOpacity={0.7}
+          >
+            <LinearGradient
+              colors={['#6366F1', '#4F46E5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.earningsGradient}
+            >
+              <View style={styles.earningsIconWrap}>
+                <Wallet size={22} color="#FFFFFF" />
+              </View>
+              <View style={styles.earningsInfo}>
+                <Text style={styles.earningsLabel}>Teaching Earnings</Text>
+                <Text style={styles.earningsPoints}>{earningsSummary.availablePoints.toLocaleString()} points available</Text>
+                <Text style={styles.earningsSub}>This month: +{earningsSummary.currentMonthPoints} pts · {earningsSummary.currentMonthClasses} classes</Text>
+              </View>
+              <View style={styles.earningsArrow}>
+                <Text style={styles.earningsArrowText}>View →</Text>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
 
           <View style={styles.statsRow}>
@@ -554,6 +582,61 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700' as const,
     color: Colors.light.primary,
+  },
+  earningsCard: {
+    marginBottom: 20,
+    borderRadius: 18,
+    overflow: 'hidden',
+    shadowColor: Colors.light.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  earningsGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 18,
+    gap: 14,
+  },
+  earningsIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  earningsInfo: {
+    flex: 1,
+  },
+  earningsLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '600' as const,
+    marginBottom: 2,
+  },
+  earningsPoints: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '800' as const,
+    marginBottom: 2,
+  },
+  earningsSub: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '500' as const,
+  },
+  earningsArrow: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  earningsArrowText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
   verificationCard: {
     flexDirection: 'row',

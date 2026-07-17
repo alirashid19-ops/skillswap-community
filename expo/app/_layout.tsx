@@ -13,6 +13,7 @@ import { NotificationsProvider } from "../providers/notifications";
 import { ResourcesProvider } from "../providers/resources";
 import { OnboardingProvider } from "../providers/onboarding";
 import { AdminProvider } from "../providers/admin";
+import { EarningsProvider } from "../providers/earnings";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -128,6 +129,30 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="admin/payouts"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="earnings"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="earnings/history"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="payout"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="help"
         options={{
           headerShown: true,
@@ -177,19 +202,21 @@ export default function RootLayout() {
         <AuthProvider>
           <OnboardingProvider>
             <CurrentUserProvider>
-              <SkillSwapsProvider>
-                <NotificationsProvider>
-                  <ResourcesProvider>
-                    <AdminProvider>
-                      <ErrorBoundary>
-                      <GestureHandlerRootView style={styles.container}>
-                        <RootLayoutNav />
-                      </GestureHandlerRootView>
-                      </ErrorBoundary>
-                    </AdminProvider>
-                  </ResourcesProvider>
-                </NotificationsProvider>
-              </SkillSwapsProvider>
+              <EarningsProvider>
+                <SkillSwapsProvider>
+                  <NotificationsProvider>
+                    <ResourcesProvider>
+                      <AdminProvider>
+                        <ErrorBoundary>
+                        <GestureHandlerRootView style={styles.container}>
+                          <RootLayoutNav />
+                        </GestureHandlerRootView>
+                        </ErrorBoundary>
+                      </AdminProvider>
+                    </ResourcesProvider>
+                  </NotificationsProvider>
+                </SkillSwapsProvider>
+              </EarningsProvider>
             </CurrentUserProvider>
           </OnboardingProvider>
         </AuthProvider>

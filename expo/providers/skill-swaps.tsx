@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { SkillSwapRequest, SkillSwapStatus, SwapMessage, SwapTimeProposal } from '../types';
 import { useCurrentUser } from './current-user';
+import { useEarnings } from './earnings';
 
 interface CreateSwapRequestInput {
   recipientId: string;
@@ -88,6 +89,7 @@ const mapProposals = (
 
 export const [SkillSwapsProvider, useSkillSwaps] = createContextHook<SkillSwapsContextValue>(() => {
   const { currentUser, allUsers } = useCurrentUser();
+  const { awardPoints } = useEarnings();
   const [swaps, setSwaps] = useState<SkillSwapRequest[]>(() => {
     const lookupSkillId = (userId: string): string => {
       const user = allUsers.find((candidate) => candidate.id === userId);
@@ -364,20 +366,38 @@ export const [SkillSwapsProvider, useSkillSwaps] = createContextHook<SkillSwapsC
 
   const completeSwap = useCallback((requestId: string) => {
     console.log('[SkillSwaps] Completing swap', requestId);
+    let completedSwap: SkillSwapRequest | undefined;
     setSwaps((previous) => {
       return previous.map((swap) => {
         if (swap.id !== requestId) {
           return swap;
         }
-        return {
-          ...swap,
-          status: 'completed',
-          updatedAt: new Date().toISOString(),
-        };
+        completedSwap = { ...swap, status: 'completed' as SkillSwapStatus, updatedAt: new Date().toISOString() };
+        return completedSwap;
       });
     });
     addMessage({ requestId, authorId: currentUser.id, body: 'Skill swap marked as completed.', isSystem: true });
-  }, [addMessage, currentUser.id]);
+
+    if (completedSwap) {
+      const teacherId = completedSwap.recipientId;
+      const studentId = completedSwap.requesterId;
+      awardPoints({
+        userId: teacherId,
+        amount: 50,
+        source: 'class_taught',
+        description: 'Taught a skill swap session',
+        swapId: requestId,
+      });
+      awardPoints({
+        userId: studentId,
+        amount: 10,
+        source: 'swap_completed',
+        description: 'Completed a skill swap session',
+        swapId: requestId,
+      });
+      console.log('[Earnings] Points awarded for swap completion', { teacherId, studentId, swapId: requestId });
+    }
+  }, [addMessage, currentUser.id, awardPoints]);
 
   const getSwapById = useCallback((requestId: string) => {
     return swaps.find((swap) => swap.id === requestId);

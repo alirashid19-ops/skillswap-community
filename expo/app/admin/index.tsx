@@ -21,14 +21,17 @@ import {
   Clock,
   Activity,
   BarChart3,
+  Wallet,
 } from 'lucide-react-native';
 import { useAdmin } from '@/providers/admin';
+import { useEarnings } from '@/providers/earnings';
 import Colors from '@/constants/colors';
 
 export default function AdminDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { stats, isAdminAuthenticated, adminLogout } = useAdmin();
+  const { pendingPayoutsCount, totalPayoutsAmount } = useEarnings();
 
   useEffect(() => {
     if (!isAdminAuthenticated) {
@@ -81,6 +84,15 @@ export default function AdminDashboard() {
       bg: '#ECFDF5',
       route: '/admin/verifications',
       badge: stats.pendingVerifications > 0 ? stats.pendingVerifications : undefined,
+    },
+    {
+      title: 'Payout Approvals',
+      subtitle: `${pendingPayoutsCount} pending · ${stats.totalUsers > 0 ? '₹' + totalPayoutsAmount.toFixed(2) + ' paid' : 'No payouts yet'}`,
+      icon: Wallet,
+      color: '#6366F1',
+      bg: '#EEF2FF',
+      route: '/admin/payouts',
+      badge: pendingPayoutsCount > 0 ? pendingPayoutsCount : undefined,
     },
   ];
 

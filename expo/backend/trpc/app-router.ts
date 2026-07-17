@@ -8,6 +8,7 @@ import { notificationsRouter } from "./routes/notifications/router";
 import { creditsRouter } from "./routes/credits/router";
 import { verificationRouter } from "./routes/verification/router";
 import { onboardingRouter } from "./routes/onboarding/router";
+import { earningsRouter } from "./routes/earnings/router";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   credits: creditsRouter,
   verification: verificationRouter,
   onboarding: onboardingRouter,
+  earnings: earningsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -222,3 +222,72 @@ export interface UserVerifications {
   skillBadges: SkillBadge[];
   trustScore: number;
 }
+
+export type EarningSourceType =
+  | 'swap_completed'
+  | 'class_taught'
+  | 'monthly_subscription'
+  | 'bonus'
+  | 'referral'
+  | 'admin_adjustment';
+
+export type PayoutMethod = 'store_credit' | 'bank_transfer' | 'upi' | 'paypal';
+
+export type PayoutStatus =
+  | 'pending'
+  | 'approved'
+  | 'processing'
+  | 'completed'
+  | 'rejected'
+  | 'cancelled';
+
+export interface PointTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  source: EarningSourceType;
+  description: string;
+  swapId?: string;
+  createdAt: string;
+}
+
+export interface PayoutRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  points: number;
+  amountCurrency: number;
+  method: PayoutMethod;
+  status: PayoutStatus;
+  createdAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+  rejectionReason?: string;
+  payoutDetails?: {
+    accountName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    upiId?: string;
+    paypalEmail?: string;
+  };
+  processedAt?: string;
+  transactionRef?: string;
+}
+
+export interface EarningsSummary {
+  userId: string;
+  totalPointsEarned: number;
+  availablePoints: number;
+  pendingPoints: number;
+  lifetimePayouts: number;
+  currentMonthPoints: number;
+  currentMonthClasses: number;
+}
+
+export interface EarningRule {
+  source: EarningSourceType;
+  label: string;
+  points: number;
+  description: string;
+}
