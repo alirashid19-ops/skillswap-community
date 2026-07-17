@@ -128,7 +128,7 @@ export default function OnboardingScreen() {
       <View style={styles.iconContainer}>
         <Sparkles size={64} color="#FF6B9D" strokeWidth={1.5} />
       </View>
-      <Text style={styles.title}>Welcome to SkillSwap!</Text>
+      <Text style={styles.title}>Welcome to LearnSwap!</Text>
       <Text style={styles.subtitle}>
         Let&apos;s set up your profile so we can match you with the perfect skill exchange partners.
       </Text>

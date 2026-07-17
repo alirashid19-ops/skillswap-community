@@ -24,7 +24,7 @@ const escapeICal = (str: string): string => {
 const generateICalContent = (title: string, startDate: Date, endDate: Date, location?: string, description?: string): string => {
   const uid = `${formatICalDate(startDate)}-${Math.random().toString(36).slice(2)}@skillswap.app`;
   const lines = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SkillSwap//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LearnSwap//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'BEGIN:VEVENT', `UID:${uid}`, `DTSTAMP:${formatICalDate(new Date())}`,
     `DTSTART:${formatICalDate(startDate)}`, `DTEND:${formatICalDate(endDate)}`, `SUMMARY:${escapeICal(title)}`,
   ];
