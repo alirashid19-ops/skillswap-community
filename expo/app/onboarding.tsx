@@ -75,7 +75,11 @@ export default function OnboardingScreen() {
 
   const handleComplete = async () => {
     console.log('[Onboarding] Completing with final data');
-    await completeOnboarding();
+    try {
+      await completeOnboarding();
+    } catch (error) {
+      console.warn('[Onboarding] completeOnboarding threw, navigating anyway:', error);
+    }
     router.replace('/(tabs)/home' as any);
   };
 

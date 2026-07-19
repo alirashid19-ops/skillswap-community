@@ -79,37 +79,42 @@ export const [OnboardingProvider, useOnboarding] = createContextHook<OnboardingC
 
   const completeOnboarding = useCallback(async () => {
     console.log('[Onboarding] Completing onboarding with data:', onboardingData);
-    if (!user) {
-      console.error('[Onboarding] Cannot complete without user');
-      return;
-    }
+
+    // Use a per-user key when authenticated, otherwise a guest key so onboarding
+    // can still complete for unauthenticated sessions.
+    const userKey = user ? `${ONBOARDING_KEY}_${user.id}` : `${ONBOARDING_KEY}_guest`;
+    const dataKey = user ? `${ONBOARDING_KEY}_${user.id}_data` : `${ONBOARDING_KEY}_guest_data`;
 
     try {
-      await completeOnboardingMutation.mutateAsync({
-        skillsToTeach: onboardingData.skillsToTeach || [],
-        skillsToLearn: onboardingData.skillsToLearn || [],
-        experienceLevels: onboardingData.experienceLevels || {},
-        learningGoals: onboardingData.learningGoals || [],
-        availability: onboardingData.availability || [],
-        communicationPreference: onboardingData.communicationPreference || '',
-        matchingPreferences: onboardingData.matchingPreferences || {
-          location: '',
-          virtual: true,
-          inPerson: false,
-        },
-      });
+      // Persist to backend only when we have an authenticated user.
+      if (user) {
+        try {
+          await completeOnboardingMutation.mutateAsync({
+            skillsToTeach: onboardingData.skillsToTeach || [],
+            skillsToLearn: onboardingData.skillsToLearn || [],
+            experienceLevels: onboardingData.experienceLevels || {},
+            learningGoals: onboardingData.learningGoals || [],
+            availability: onboardingData.availability || [],
+            communicationPreference: onboardingData.communicationPreference || '',
+            matchingPreferences: onboardingData.matchingPreferences || {
+              location: '',
+              virtual: true,
+              inPerson: false,
+            },
+          });
+        } catch (backendError) {
+          console.warn('[Onboarding] Backend save failed, continuing with local persistence:', backendError);
+        }
+      }
 
-      const key = `${ONBOARDING_KEY}_${user.id}`;
-      await AsyncStorage.setItem(key, 'true');
-      
-      const dataKey = `${ONBOARDING_KEY}_${user.id}_data`;
+      await AsyncStorage.setItem(userKey, 'true');
       await AsyncStorage.setItem(dataKey, JSON.stringify(onboardingData));
       
       setHasCompletedOnboarding(true);
       setCurrentStep(0);
       setOnboardingData({});
       
-      console.log('[Onboarding] Completed successfully');
+      console.log('[Onboarding] Completed successfully', { hasUser: !!user });
     } catch (error) {
       console.error('[Onboarding] Failed to complete:', error);
       throw error;
