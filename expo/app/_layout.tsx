@@ -135,7 +135,7 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
-        name="earnings"
+        name="earnings/index"
         options={{
           headerShown: false,
         }}
