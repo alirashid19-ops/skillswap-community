@@ -44,15 +44,16 @@ export default function OnboardingScreen() {
   const skillCategories = categories.filter(c => c !== 'All');
 
   const goToNextStep = () => {
-    if (currentStep === 0) {
+    // Save data when leaving each step (step 0 = welcome, no data)
+    if (currentStep === 1) {
       updateOnboardingData({ skillsToTeach: selectedTeachSkills });
-    } else if (currentStep === 1) {
-      updateOnboardingData({ skillsToTeach: selectedTeachSkills, experienceLevels });
     } else if (currentStep === 2) {
-      updateOnboardingData({ skillsToLearn: selectedLearnSkills, learningGoals });
+      updateOnboardingData({ skillsToTeach: selectedTeachSkills, experienceLevels });
     } else if (currentStep === 3) {
-      updateOnboardingData({ availability });
+      updateOnboardingData({ skillsToLearn: selectedLearnSkills, learningGoals });
     } else if (currentStep === 4) {
+      updateOnboardingData({ availability });
+    } else if (currentStep === 5) {
       updateOnboardingData({ 
         communicationPreference: communication,
         matchingPreferences: { location, virtual: virtualEnabled, inPerson: inPersonEnabled }
@@ -79,11 +80,19 @@ export default function OnboardingScreen() {
   };
 
   const canContinue = () => {
-    if (currentStep === 0) return selectedTeachSkills.length > 0;
-    if (currentStep === 1) return selectedTeachSkills.every(skill => experienceLevels[skill]);
-    if (currentStep === 2) return selectedLearnSkills.length > 0;
-    if (currentStep === 3) return availability.length > 0;
-    if (currentStep === 4) return communication.length > 0 && (virtualEnabled || inPersonEnabled);
+    // Step 0 = welcome (no input needed)
+    if (currentStep === 0) return true;
+    // Step 1 = teach skills
+    if (currentStep === 1) return selectedTeachSkills.length > 0;
+    // Step 2 = experience levels
+    if (currentStep === 2) return selectedTeachSkills.every(skill => experienceLevels[skill]);
+    // Step 3 = learn skills
+    if (currentStep === 3) return selectedLearnSkills.length > 0;
+    // Step 4 = availability
+    if (currentStep === 4) return availability.length > 0;
+    // Step 5 = preferences
+    if (currentStep === 5) return communication.length > 0 && (virtualEnabled || inPersonEnabled);
+    // Step 6 = final summary
     return true;
   };
 
