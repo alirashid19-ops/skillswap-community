@@ -22,6 +22,7 @@ import {
   BookOpen,
 } from 'lucide-react-native';
 import { useOnboarding, OnboardingRole } from '@/providers/onboarding';
+import { useCurrentUser } from '@/providers/current-user';
 import { categories } from '@/mocks/data';
 
 type SkillLevel = 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
@@ -48,6 +49,7 @@ const ROLE_OPTIONS: {
 export default function OnboardingScreen() {
   const router = useRouter();
   const { updateOnboardingData, completeOnboarding } = useOnboarding();
+  const { applyOnboardingData } = useCurrentUser();
 
   const [role, setRole] = useState<OnboardingRole | null>(null);
   const [stepIndex, setStepIndex] = useState<number>(0);
@@ -110,6 +112,18 @@ export default function OnboardingScreen() {
   };
 
   const handleComplete = async () => {
+    // Apply the collected onboarding data to the current user so Smart Matches
+    // and the home screen immediately reflect the user's chosen role and skills.
+    applyOnboardingData({
+      role: role ?? 'swap',
+      skillsToTeach: selectedTeachSkills,
+      skillsToLearn: selectedLearnSkills,
+      experienceLevels,
+      learningGoals,
+      availability,
+      communicationPreference: communication,
+      matchingPreferences: { location, virtual: virtualEnabled, inPerson: inPersonEnabled },
+    });
     try {
       await completeOnboarding();
     } catch (error) {
