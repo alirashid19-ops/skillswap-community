@@ -3,6 +3,7 @@ import { protectedProcedure } from '../../create-context';
 import { TRPCError } from '@trpc/server';
 
 const onboardingDataSchema = z.object({
+  role: z.enum(['teacher', 'learner', 'swap']).optional(),
   skillsToTeach: z.array(z.string()),
   skillsToLearn: z.array(z.string()),
   experienceLevels: z.record(z.string(), z.string()),

@@ -6,7 +6,10 @@ import { trpc } from '@/lib/trpc';
 
 const ONBOARDING_KEY = '@skillswap/onboarding_complete';
 
+export type OnboardingRole = 'teacher' | 'learner' | 'swap';
+
 export interface OnboardingData {
+  role?: OnboardingRole;
   skillsToTeach: string[];
   skillsToLearn: string[];
   experienceLevels: Record<string, string>;
@@ -90,6 +93,7 @@ export const [OnboardingProvider, useOnboarding] = createContextHook<OnboardingC
       if (user) {
         try {
           await completeOnboardingMutation.mutateAsync({
+            role: onboardingData.role || 'swap',
             skillsToTeach: onboardingData.skillsToTeach || [],
             skillsToLearn: onboardingData.skillsToLearn || [],
             experienceLevels: onboardingData.experienceLevels || {},
