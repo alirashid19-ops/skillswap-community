@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { RefreshCcw, Star, TrendingUp, Users, Zap } from 'lucide-react-native';
+import { RefreshCcw, Star, TrendingUp, Users, Zap, GraduationCap, BookOpen, ArrowLeftRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '../../constants/colors';
 import { getSkillsWithUsers, categories } from '../../mocks/data';
@@ -21,7 +21,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const skillsWithUsers = getSkillsWithUsers();
-  const { currentUser, topRecommendations, teachMatches, refreshRecommendations } = useCurrentUser();
+  const { currentUser, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, refreshRecommendations } = useCurrentUser();
 
   const filteredSkills = selectedCategory === 'All' 
     ? skillsWithUsers 
@@ -29,11 +29,56 @@ export default function HomeScreen() {
 
   const featuredSkills = skillsWithUsers.slice(0, 3);
   const topTeachMatches = useMemo(() => teachMatches.slice(0, 4), [teachMatches]);
+  const topLearnMatches = useMemo(() => learnMatches.slice(0, 4), [learnMatches]);
+  const topSwapMatches = useMemo(() => swapMatches.slice(0, 4), [swapMatches]);
   const hasMatches = topRecommendations.length > 0;
   const firstName = useMemo(() => {
     const [first] = currentUser.name.split(' ');
     return first ?? currentUser.name;
   }, [currentUser.name]);
+  const matchesSubtitle = useMemo(() => {
+    if (userRole === 'teacher') return `Learners who need ${firstName}'s skills`;
+    if (userRole === 'learner') return `Teachers who can help ${firstName} grow`;
+    return `Perfect swap partners for ${firstName}`;
+  }, [userRole, firstName]);
+
+  const secondarySection = useMemo<{
+    title: string;
+    subtitle: string;
+    items: typeof topTeachMatches;
+    chips: (m: typeof topTeachMatches[number]) => string[];
+    icon: typeof GraduationCap;
+    color: string;
+  } | null>(() => {
+    if (userRole === 'teacher') {
+      return {
+        title: 'They want to learn from you',
+        subtitle: 'Based on the skills you offer',
+        items: topTeachMatches,
+        chips: (m) => m.theyCanLearn.slice(0, 2),
+        icon: GraduationCap,
+        color: Colors.light.primary,
+      };
+    }
+    if (userRole === 'learner') {
+      return {
+        title: 'They can teach you',
+        subtitle: 'People offering what you want to learn',
+        items: topLearnMatches,
+        chips: (m) => m.youCanLearn.slice(0, 2),
+        icon: BookOpen,
+        color: '#6366F1',
+      };
+    }
+    return {
+      title: 'Mutual skill swaps',
+      subtitle: 'Teach each other — give & get',
+      items: topSwapMatches,
+      chips: (m) => [...m.youCanLearn.slice(0, 1), ...m.theyCanLearn.slice(0, 1)],
+      icon: ArrowLeftRight,
+      color: '#F59E0B',
+    };
+  }, [userRole, topTeachMatches, topLearnMatches, topSwapMatches]);
 
   return (
     <View style={styles.container}>
@@ -61,9 +106,7 @@ export default function HomeScreen() {
             <View style={styles.matchesHeader}>
               <View style={styles.matchesTitleGroup}>
                 <Text style={styles.matchesTitle}>Smart Matches</Text>
-                <Text style={styles.matchesSubtitle}>
-                  {hasMatches ? `Perfect partners for ${firstName}` : 'Update your skills to unlock tailored pairings'}
-                </Text>
+                <Text style={styles.matchesSubtitle}>{matchesSubtitle}</Text>
               </View>
               <TouchableOpacity
                 style={styles.refreshButton}
@@ -102,17 +145,20 @@ export default function HomeScreen() {
           <View style={styles.teachSection} testID="teach-matches-section">
             <View style={styles.matchesHeader}>
               <View style={styles.matchesTitleGroup}>
-                <Text style={styles.teachTitle}>They want to learn from you</Text>
-                <Text style={styles.matchesSubtitle}>Based on the skills you offer</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {secondarySection && <secondarySection.icon size={20} color={secondarySection.color} />}
+                  <Text style={styles.teachTitle}>{secondarySection?.title ?? ''}</Text>
+                </View>
+                <Text style={styles.matchesSubtitle}>{secondarySection?.subtitle ?? ''}</Text>
               </View>
             </View>
-            {topTeachMatches.map((match) => (
+            {secondarySection?.items.map((match) => (
               <TouchableOpacity
-                key={`teach-${match.user.id}`}
+                key={`sec-${match.user.id}`}
                 style={styles.teachCard}
                 onPress={() => router.push(`/profile/${match.user.id}` as any)}
                 activeOpacity={0.85}
-                testID={`teach-card-${match.user.id}`}
+                testID={`sec-card-${match.user.id}`}
               >
                 {match.user.avatarUrl ? (
                   <Image source={{ uri: match.user.avatarUrl }} style={styles.teachAvatar} />
@@ -122,7 +168,7 @@ export default function HomeScreen() {
                 <View style={styles.teachInfo}>
                   <Text style={styles.teachName}>{match.user.name}</Text>
                   <View style={styles.teachSkillsRow}>
-                    {match.theyCanLearn.slice(0, 2).map((skill) => (
+                    {secondarySection.chips(match).map((skill) => (
                       <View key={`${match.user.id}-${skill}`} style={styles.teachChip}>
                         <Text style={styles.teachChipText}>{skill}</Text>
                       </View>
@@ -135,9 +181,9 @@ export default function HomeScreen() {
                 </View>
               </TouchableOpacity>
             ))}
-            {topTeachMatches.length === 0 && (
+            {secondarySection && secondarySection.items.length === 0 && (
               <View style={styles.emptyTeachCard}>
-                <Text style={styles.emptyMatchesTitle}>Expand your offerings to get learners here</Text>
+                <Text style={styles.emptyMatchesTitle}>No matches here yet — add more skills to your profile.</Text>
               </View>
             )}
           </View>

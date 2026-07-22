@@ -1,7 +1,17 @@
-import type { MatchRecommendation, SkillCategory, User } from '../types';
+import type { MatchRecommendation, OnboardingRole, SkillCategory, User } from '../types';
 
 const unique = (values: string[]): string[] => {
   return Array.from(new Set(values));
+};
+
+/** Derive a user's role from their skills. Falls back to explicit role field, then 'swap'. */
+export const getUserRole = (user: User): OnboardingRole => {
+  if (user.role) return user.role;
+  const offers = user.skillsOffered.length > 0;
+  const wants = user.skillsWanted.length > 0;
+  if (offers && !wants) return 'teacher';
+  if (wants && !offers) return 'learner';
+  return 'swap';
 };
 
 const clampCompatibility = (value: number): number => {

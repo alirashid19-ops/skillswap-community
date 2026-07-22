@@ -15,6 +15,7 @@ export const mockUsers: User[] = [
     credits: 50,
     premiumTier: 'premium',
     premiumExpiresAt: '2025-03-15',
+    role: 'swap',
   },
   {
     id: '2',

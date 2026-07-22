@@ -24,6 +24,8 @@ export interface Skill {
   imageUrl: string;
 }
 
+export type OnboardingRole = 'teacher' | 'learner' | 'swap';
+
 export type PremiumTier = 'free' | 'basic' | 'premium' | 'elite';
 
 export interface User {
@@ -40,6 +42,7 @@ export interface User {
   credits: number;
   premiumTier: PremiumTier;
   premiumExpiresAt?: string;
+  role?: OnboardingRole;
 }
 
 export interface SkillWithUser extends Skill {
