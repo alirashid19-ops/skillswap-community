@@ -162,7 +162,7 @@ export default function ProfileScreen() {
               <View style={styles.statIconContainer}>
                 <Calendar size={20} color={Colors.light.secondary} />
               </View>
-              <Text style={styles.statValue}>2024</Text>
+              <Text style={styles.statValue}>{new Date(currentUser.joinedDate).getFullYear()}</Text>
               <Text style={styles.statLabel}>Joined</Text>
             </View>
           </View>

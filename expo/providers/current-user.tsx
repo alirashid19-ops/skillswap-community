@@ -18,6 +18,11 @@ interface CurrentUserContextValue {
   swapMatches: MatchRecommendation[];
   userRole: OnboardingRole;
   applyOnboardingData: (data: Partial<OnboardingData>) => void;
+  addSkill: (skill: Skill) => void;
+  removeSkill: (skillId: string) => void;
+  addLearnSkill: (title: string) => void;
+  removeLearnSkill: (title: string) => void;
+  spendCredits: (amount: number) => boolean;
   refreshRecommendations: () => void;
 }
 
@@ -62,6 +67,44 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
       });
       return updated;
     });
+  }, []);
+
+  const addSkill = useCallback((skill: Skill) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      skillsOffered: [...prev.skillsOffered, skill],
+    }));
+  }, []);
+
+  const removeSkill = useCallback((skillId: string) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      skillsOffered: prev.skillsOffered.filter(s => s.id !== skillId),
+    }));
+  }, []);
+
+  const addLearnSkill = useCallback((title: string) => {
+    setCurrentUser(prev => {
+      if (prev.skillsWanted.includes(title)) return prev;
+      return { ...prev, skillsWanted: [...prev.skillsWanted, title] };
+    });
+  }, []);
+
+  const removeLearnSkill = useCallback((title: string) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      skillsWanted: prev.skillsWanted.filter(s => s !== title),
+    }));
+  }, []);
+
+  const spendCredits = useCallback((amount: number) => {
+    let success = false;
+    setCurrentUser(prev => {
+      if (prev.credits < amount) return prev;
+      success = true;
+      return { ...prev, credits: prev.credits - amount };
+    });
+    return success;
   }, []);
 
   // On mount, load any previously-saved onboarding data from AsyncStorage so the
@@ -134,9 +177,14 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
       swapMatches,
       userRole,
       applyOnboardingData,
+      addSkill,
+      removeSkill,
+      addLearnSkill,
+      removeLearnSkill,
+      spendCredits,
       refreshRecommendations,
     };
-  }, [currentUser, recommendations, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, applyOnboardingData, refreshRecommendations]);
+  }, [currentUser, recommendations, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, applyOnboardingData, addSkill, removeSkill, addLearnSkill, removeLearnSkill, spendCredits, refreshRecommendations]);
 
   return value;
 });

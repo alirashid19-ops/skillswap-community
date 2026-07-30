@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { MapPin, Star, Users, ArrowRight, Award, Clock, CalendarCheck2, IndianRupee, Sparkles } from 'lucide-react-native';
+import { MapPin, Star, Users, ArrowRight, Award, Clock, CalendarCheck2, IndianRupee, Sparkles, Trash2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/colors';
@@ -35,11 +35,12 @@ export default function SkillDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const skillsWithUsers = getSkillsWithUsers();
-  const skill = skillsWithUsers.find(s => s.id === id);
+  const skillsWithUsers = useMemo(() => getSkillsWithUsers(), []);
+  const skill = useMemo(() => skillsWithUsers.find(s => s.id === id), [skillsWithUsers, id]);
   const { swaps } = useSkillSwaps();
-  const { currentUser } = useCurrentUser();
+  const { currentUser, removeSkill } = useCurrentUser();
   const [isSwapModalVisible, setSwapModalVisible] = useState<boolean>(false);
+  const isOwner = skill?.userId === currentUser.id;
 
   const reviewsSummary = trpc.reviews.list.useQuery(
     { revieweeId: skill?.user.id ?? '', skillId: skill?.id ?? '' },
@@ -110,6 +111,24 @@ export default function SkillDetailScreen() {
     setSwapModalVisible(true);
   }, [activeSwap, router]);
 
+  const handleDeleteSkill = useCallback(() => {
+    Alert.alert(
+      'Delete Skill',
+      `Remove "${skill?.title}" from your teaching skills? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            if (skill) removeSkill(skill.id);
+            router.back();
+          },
+        },
+      ],
+    );
+  }, [skill, removeSkill, router]);
+
   const contentContainerStyle = useMemo(() => {
     return {
       paddingBottom: insets.bottom + 140,
@@ -179,7 +198,14 @@ export default function SkillDetailScreen() {
             </View>
           </View>
 
-          <Text style={styles.title}>{skill.title}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{skill.title}</Text>
+            {isOwner && (
+              <TouchableOpacity onPress={handleDeleteSkill} style={styles.deleteButton} activeOpacity={0.7} testID="delete-skill-button">
+                <Trash2 size={20} color="#EF4444" />
+              </TouchableOpacity>
+            )}
+          </View>
 
           {(skill.promoted || skill.pricingModel) && (
             <View style={styles.pricingCard}>
@@ -371,12 +397,28 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: Colors.light.primary,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    gap: 12,
+  },
   title: {
+    flex: 1,
     fontSize: 30,
     fontWeight: '800' as const,
     color: Colors.light.text,
-    marginBottom: 16,
     lineHeight: 38,
+  },
+  deleteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
   },
   description: {
     marginBottom: 24,

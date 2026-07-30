@@ -1,21 +1,8 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  ImageBackground,
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Animated, Easing, ImageBackground, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BookmarkPlus, Check, ExternalLink, Flame, Layers, Plus, Sparkles, Tag, UploadCloud } from 'lucide-react-native';
+import { BookmarkPlus, Check, ExternalLink, Flame, Layers, Plus, Sparkles, Tag, Trash2, UploadCloud } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { categories } from '@/mocks/data';
 import type { ResourceMeta, ResourceType, SkillCategory, SkillLevel } from '@/types';
@@ -37,12 +24,14 @@ interface ResourceCardProps {
   resource: ResourceMeta;
   isSaved: boolean;
   difficultyText: string;
+  canDelete: boolean;
   onOpen: () => void;
   onToggleSave: () => void;
   onEndorse: () => void;
+  onDelete: () => void;
 }
 
-const ResourceCardItem = memo(({ resource, isSaved, difficultyText, onOpen, onToggleSave, onEndorse }: ResourceCardProps) => {
+const ResourceCardItem = memo(({ resource, isSaved, difficultyText, canDelete, onOpen, onToggleSave, onEndorse, onDelete }: ResourceCardProps) => {
   return (
     <View style={styles.resourceCard} testID={`resource-${resource.id}`}>
       <Pressable onPress={onOpen} testID={`resource-open-${resource.id}`}>
@@ -96,6 +85,11 @@ const ResourceCardItem = memo(({ resource, isSaved, difficultyText, onOpen, onTo
             <Flame size={16} color="#FFFFFF" />
             <Text style={styles.endorseText}>{resource.endorsements}</Text>
           </TouchableOpacity>
+          {canDelete && (
+            <TouchableOpacity style={styles.deleteResourceBtn} onPress={onDelete} activeOpacity={0.85} testID={`delete-resource-${resource.id}`}>
+              <Trash2 size={16} color="#EF4444" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -105,7 +99,7 @@ ResourceCardItem.displayName = 'ResourceCardItem';
 
 export default function ResourcesScreen() {
   const insets = useSafeAreaInsets();
-  const { resources, featuredResources, recentResources, savedResourceIds, trendingTags, addResource, toggleSaved, endorseResource } = useResources();
+  const { resources, featuredResources, recentResources, savedResourceIds, trendingTags, addResource, deleteResource, toggleSaved, endorseResource } = useResources();
   const { currentUser } = useCurrentUser();
   const [selectedType, setSelectedType] = useState<ActiveTypeFilter>('All');
   const [selectedCategory, setSelectedCategory] = useState<SkillCategory | 'All'>('All');
@@ -196,6 +190,17 @@ export default function ResourcesScreen() {
   const difficultyLabel = useCallback((difficulty: SkillLevel | 'All Levels') => {
     return difficulty === 'All Levels' ? 'Open to everyone' : `${difficulty} friendly`;
   }, []);
+
+  const handleDeleteResource = useCallback((resource: ResourceMeta) => {
+    Alert.alert(
+      'Delete Resource',
+      `Remove "${resource.title}" from the community library?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => deleteResource(resource.id) },
+      ],
+    );
+  }, [deleteResource]);
 
   return (
     <View style={styles.screen}>
@@ -291,7 +296,7 @@ export default function ResourcesScreen() {
 
           <View style={{ gap: 20 }}>
             {filteredResources.map((r) => (
-              <ResourceCardItem key={r.id} resource={r} isSaved={savedResourceIds.includes(r.id)} difficultyText={difficultyLabel(r.difficulty)} onOpen={() => handleVisitResource(r.url)} onToggleSave={() => toggleSaved(r.id)} onEndorse={() => endorseResource(r.id)} />
+              <ResourceCardItem key={r.id} resource={r} isSaved={savedResourceIds.includes(r.id)} difficultyText={difficultyLabel(r.difficulty)} canDelete={r.contributorId === currentUser.id} onOpen={() => handleVisitResource(r.url)} onToggleSave={() => toggleSaved(r.id)} onEndorse={() => endorseResource(r.id)} onDelete={() => handleDeleteResource(r)} />
             ))}
             {filteredResources.length === 0 && (
               <View style={styles.emptyState} testID="resources-empty">
@@ -459,6 +464,7 @@ const styles = StyleSheet.create({
   saveButtonTextActive: { color: '#312E81' },
   endorseButton: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 14, backgroundColor: '#F97316' },
   endorseText: { fontSize: 14, fontWeight: '700' as const, color: '#FFFFFF' },
+  deleteResourceBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.1)', alignItems: 'center', justifyContent: 'center' },
   emptyState: { alignItems: 'center', gap: 12, padding: 24, borderRadius: 20, backgroundColor: Colors.light.card, borderWidth: 1, borderColor: Colors.light.borderLight },
   emptyTitle: { fontSize: 20, fontWeight: '700' as const, color: Colors.light.text },
   emptySubtitle: { fontSize: 14, color: Colors.light.textSecondary, textAlign: 'center', lineHeight: 20 },

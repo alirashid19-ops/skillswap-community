@@ -100,7 +100,7 @@ const STOCK_IMAGES: Record<SkillCategory, string> = {
 
 export default function AddSkillScreen() {
   const router = useRouter();
-  const { currentUser } = useCurrentUser();
+  const { currentUser, addSkill, addLearnSkill } = useCurrentUser();
 
   const [mode, setMode] = useState<AddMode | null>(null);
   const [teachTitle, setTeachTitle] = useState<string>('');
@@ -173,13 +173,10 @@ export default function AddSkillScreen() {
       }
 
       if (showLearnFields && learnTitle.trim()) {
-        const alreadyWants = currentUser.skillsWanted.includes(learnTitle.trim());
-        if (!alreadyWants) {
-          currentUser.skillsWanted.push(learnTitle.trim());
-        }
+        addLearnSkill(learnTitle.trim());
       }
 
-      newSkills.forEach((s) => currentUser.skillsOffered.push(s));
+      newSkills.forEach((s) => addSkill(s));
 
       const summary =
         mode === 'teach'

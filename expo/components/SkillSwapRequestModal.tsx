@@ -33,7 +33,7 @@ const stepTitles = ['Choose your trade', 'Pick session slots', 'Wrap-up details'
 
 export default function SkillSwapRequestModal({ visible, skill, onClose }: SkillSwapRequestModalProps) {
   const router = useRouter();
-  const { currentUser } = useCurrentUser();
+  const { currentUser, spendCredits } = useCurrentUser();
   const { createSwapRequest } = useSkillSwaps();
   const [step, setStep] = useState<number>(0);
   const [selectedSkillId, setSelectedSkillId] = useState<string>(currentUser.skillsOffered[0]?.id ?? '');
@@ -79,6 +79,7 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
     if (step < 2) { setStep((p) => p + 1); return; }
     const submit = async () => {
       if (!hasEnoughCredits && swapCost > 0) { setError(`You need ${swapCost - currentUser.credits} more credits.`); return; }
+      if (swapCost > 0) { spendCredits(swapCost); }
       try {
         const createdSwap = await submitSwapRequest({
           recipientId: skill.user.id, recipientSkillId: skill.id, requesterSkillId: selectedSkillId,
@@ -90,7 +91,7 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
       } catch (e) { console.log('[SkillSwap] Failed', e); setError('Unable to create the request. Try again.'); }
     };
     void submit();
-  }, [canAdvance, introMessage, isSubmitting, mergedLocation, onClose, router, selectedSkillId, selectedTimes, skill.id, skill.user.id, step, submitSwapRequest]);
+  }, [canAdvance, introMessage, isSubmitting, mergedLocation, onClose, router, selectedSkillId, selectedTimes, skill.id, skill.user.id, spendCredits, step, submitSwapRequest, swapCost]);
 
   const activeSkill = useMemo(() => currentUser.skillsOffered.find((c) => c.id === selectedSkillId) ?? null, [currentUser.skillsOffered, selectedSkillId]);
 

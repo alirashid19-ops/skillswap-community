@@ -23,6 +23,7 @@ interface ResourcesContextValue {
   savedResourceIds: string[];
   trendingTags: string[];
   addResource: (draft: ResourceDraft, contributorId: string) => ResourceMeta | null;
+  deleteResource: (resourceId: string) => void;
   toggleSaved: (resourceId: string) => void;
   endorseResource: (resourceId: string) => void;
 }
@@ -147,6 +148,11 @@ export const [ResourcesProvider, useResources] = createContextHook<ResourcesCont
     [],
   );
 
+  const deleteResource = useCallback((resourceId: string) => {
+    setResourceList((prev) => prev.filter((r) => r.id !== resourceId));
+    setSavedResourceIds((prev) => prev.filter((id) => id !== resourceId));
+  }, []);
+
   const value: ResourcesContextValue = useMemo(() => {
     return {
       resources: resourceList,
@@ -155,10 +161,11 @@ export const [ResourcesProvider, useResources] = createContextHook<ResourcesCont
       savedResourceIds,
       trendingTags,
       addResource,
+      deleteResource,
       toggleSaved,
       endorseResource,
     };
-  }, [resourceList, featuredResources, recentResources, savedResourceIds, trendingTags, addResource, toggleSaved, endorseResource]);
+  }, [resourceList, featuredResources, recentResources, savedResourceIds, trendingTags, addResource, deleteResource, toggleSaved, endorseResource]);
 
   return value;
 });

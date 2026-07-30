@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { getSkillsWithUsers, mockUsers, categories } from '@/mocks/data';
+import { useCurrentUser } from '@/providers/current-user';
 import type { SkillLevel, SkillWithUser, User } from '@/types';
 
 type SortBy = 'Relevance' | 'Rating' | 'Swaps' | 'Newest';
@@ -49,6 +50,7 @@ const ROLE_TABS: { key: RoleTab; label: string; icon: typeof GraduationCap }[] =
 
 export default function ExploreScreen() {
   const router = useRouter();
+  const { currentUser } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<RoleTab>('teachers');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -56,8 +58,8 @@ export default function ExploreScreen() {
   const [filters, setFilters] = useState<FiltersState>({ level: 'Any', minRating: 0, sortBy: 'Relevance' });
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const skillsWithUsers = getSkillsWithUsers();
-  const otherUsers = mockUsers.slice(1);
+  const skillsWithUsers = useMemo(() => getSkillsWithUsers(), []);
+  const otherUsers = useMemo(() => mockUsers.filter(u => u.id !== currentUser.id), [currentUser.id]);
 
   const toggleFilters = useCallback(() => {
     const next = !isFilterOpen;
