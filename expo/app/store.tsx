@@ -1,29 +1,25 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Stack } from 'expo-router';
-import { Coins, Crown, Zap, Check } from 'lucide-react-native';
+import { Coins, Crown, Zap, Check, Sparkles } from 'lucide-react-native';
 import { useState } from 'react';
 import Colors from '@/constants/colors';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/providers/auth';
+import { useCurrentUser } from '@/providers/current-user';
 import { formatPrice } from '@/constants/locale';
-
-const creditPackages = [
-  { id: 'starter' as const, credits: 25, price: 99, popular: false },
-  { id: 'popular' as const, credits: 60, price: 199, popular: true },
-  { id: 'best_value' as const, credits: 150, price: 449, popular: false },
-  { id: 'mega' as const, credits: 400, price: 999, popular: false },
-];
+import { CREDIT_PACKAGES, type CreditPackage } from '@/lib/payments';
 
 const premiumTiers = [
-  { id: 'basic' as const, name: 'Basic', monthlyPrice: 199, yearlyPrice: 1999, monthlyCredits: 30, features: ['Priority matching', 'Ad-free experience', 'Basic analytics'], color: '#6366F1' },
-  { id: 'premium' as const, name: 'Premium', monthlyPrice: 399, yearlyPrice: 3999, monthlyCredits: 80, features: ['All Basic features', 'Unlimited swaps', 'Advanced matching', 'Video calls'], color: '#8B5CF6', popular: true },
-  { id: 'elite' as const, name: 'Elite', monthlyPrice: 999, yearlyPrice: 9999, monthlyCredits: 200, features: ['All Premium features', 'Concierge support', 'Exclusive events', 'Expert badge'], color: '#F59E0B' },
+  { id: 'basic' as const, name: 'Basic', monthlyPrice: 199, yearlyPrice: 1999, monthlyCredits: 30, features: ['Priority matching', 'Ad-free experience', 'Basic analytics', 'No platform fees on swaps'], color: '#6366F1' },
+  { id: 'premium' as const, name: 'Premium', monthlyPrice: 399, yearlyPrice: 3999, monthlyCredits: 80, features: ['All Basic features', 'Unlimited swaps', 'Advanced matching', 'Video calls', 'No platform fees on swaps'], color: '#8B5CF6', popular: true },
+  { id: 'elite' as const, name: 'Elite', monthlyPrice: 999, yearlyPrice: 9999, monthlyCredits: 200, features: ['All Premium features', 'Concierge support', 'Exclusive events', 'Expert badge', 'No platform fees on swaps'], color: '#F59E0B' },
 ];
 
 export default function StoreScreen() {
   const [selectedTab, setSelectedTab] = useState<'credits' | 'premium'>('credits');
   const [selectedDuration, setSelectedDuration] = useState<'monthly' | 'yearly'>('monthly');
   const { user } = useAuth();
+  const { currentUser } = useCurrentUser();
   const utils = trpc.useUtils();
 
   const purchaseCreditsMutation = trpc.credits.purchaseCredits.useMutation({
@@ -36,12 +32,11 @@ export default function StoreScreen() {
     onError: (error) => { Alert.alert('Error', error.message); },
   });
 
-  const handlePurchaseCredits = (packageId: typeof creditPackages[number]['id']) => {
-    const pkg = creditPackages.find((p) => p.id === packageId);
-    if (!pkg) return;
-    Alert.alert('Purchase Credits', `Buy ${pkg.credits} credits for ${formatPrice(pkg.price)}?`, [
+  const handlePurchaseCredits = (pkg: CreditPackage) => {
+    const totalCredits = pkg.credits + pkg.bonusCredits;
+    Alert.alert('Purchase Credits', `Buy ${pkg.credits} credits + ${pkg.bonusCredits} bonus = ${totalCredits} total for ${formatPrice(pkg.priceRupees)}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Buy', onPress: () => purchaseCreditsMutation.mutate({ packageId }) },
+      { text: 'Buy', onPress: () => purchaseCreditsMutation.mutate({ packageId: pkg.id as 'starter' | 'popular' | 'best_value' | 'mega' }) },
     ]);
   };
 
@@ -63,7 +58,7 @@ export default function StoreScreen() {
           <View style={s.balanceIcon}><Coins size={24} color="#F59E0B" /></View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 13, color: Colors.light.textSecondary, marginBottom: 2 }}>Your Balance</Text>
-            <Text style={{ fontSize: 24, fontWeight: '700' as const, color: Colors.light.text }}>{user?.credits || 0} Credits</Text>
+            <Text style={{ fontSize: 24, fontWeight: '700' as const, color: Colors.light.text }}>{currentUser.credits} Credits</Text>
           </View>
         </View>
       </View>
@@ -81,21 +76,30 @@ export default function StoreScreen() {
         {selectedTab === 'credits' ? (
           <View style={s.section}>
             <Text style={s.sectionTitle}>Credit Packages</Text>
-            <Text style={s.sectionDesc}>Use credits to request skill swaps and unlock premium features</Text>
+            <Text style={s.sectionDesc}>1 credit = ₹1 face value. Use credits to pay for sessions, unlock premium features, and tip teachers.</Text>
             <View style={s.packagesGrid}>
-              {creditPackages.map((pkg) => (
+              {CREDIT_PACKAGES.map((pkg) => {
+                const totalCredits = pkg.credits + pkg.bonusCredits;
+                return (
                 <View key={pkg.id} style={s.packageCard}>
                   {pkg.popular && <View style={s.popularBadge}><Zap size={12} color="#FFF" fill="#FFF" /><Text style={{ fontSize: 10, fontWeight: '700' as const, color: '#FFF', letterSpacing: 0.5 }}>POPULAR</Text></View>}
                   <View style={s.packageIcon}><Coins size={32} color={Colors.light.primary} /></View>
-                  <Text style={{ fontSize: 28, fontWeight: '700' as const, color: Colors.light.text }}>{pkg.credits}</Text>
-                  <Text style={{ fontSize: 13, color: Colors.light.textSecondary, marginBottom: 12 }}>Credits</Text>
+                  <Text style={{ fontSize: 28, fontWeight: '700' as const, color: Colors.light.text }}>{totalCredits}</Text>
+                  <Text style={{ fontSize: 13, color: Colors.light.textSecondary, marginBottom: 4 }}>Credits</Text>
+                  {pkg.bonusCredits > 0 && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+                      <Sparkles size={12} color="#F59E0B" />
+                      <Text style={{ fontSize: 11, fontWeight: '600' as const, color: '#F59E0B' }}>+{pkg.bonusCredits} bonus</Text>
+                    </View>
+                  )}
                   <View style={{ width: '100%', height: 1, backgroundColor: Colors.light.borderLight, marginVertical: 12 }} />
-                  <Text style={{ fontSize: 20, fontWeight: '700' as const, color: Colors.light.primary, marginBottom: 12 }}>{formatPrice(pkg.price)}</Text>
-                  <TouchableOpacity style={[s.buyBtn, purchaseCreditsMutation.isPending && { opacity: 0.6 }]} onPress={() => handlePurchaseCredits(pkg.id)} disabled={purchaseCreditsMutation.isPending}>
+                  <Text style={{ fontSize: 20, fontWeight: '700' as const, color: Colors.light.primary, marginBottom: 12 }}>{formatPrice(pkg.priceRupees)}</Text>
+                  <TouchableOpacity style={[s.buyBtn, purchaseCreditsMutation.isPending && { opacity: 0.6 }]} onPress={() => handlePurchaseCredits(pkg)} disabled={purchaseCreditsMutation.isPending}>
                     <Text style={{ fontSize: 14, fontWeight: '700' as const, color: '#FFF' }}>{purchaseCreditsMutation.isPending ? 'Processing...' : 'Buy Now'}</Text>
                   </TouchableOpacity>
                 </View>
-              ))}
+                );
+              })}
             </View>
           </View>
         ) : (
@@ -139,8 +143,9 @@ export default function StoreScreen() {
             </View>
           </View>
         )}
-        <View style={{ padding: 20, alignItems: 'center' }}>
+        <View style={{ padding: 20, alignItems: 'center', gap: 6 }}>
           <Text style={{ fontSize: 13, color: Colors.light.textSecondary, textAlign: 'center', fontStyle: 'italic' }}>This is a demo payment system. No actual charges will be made.</Text>
+          <Text style={{ fontSize: 12, color: Colors.light.textTertiary, textAlign: 'center' }}>1 credit = ₹1 when spending or redeeming as store credit.</Text>
         </View>
       </ScrollView>
     </View>

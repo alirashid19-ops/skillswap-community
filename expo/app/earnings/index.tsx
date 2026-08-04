@@ -24,7 +24,7 @@ export default function EarningsDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { currentUser } = useCurrentUser();
-  const { getSummary, earningRules, pointsToCurrency, getUserPayouts } =
+  const { getSummary, earningRules, creditsToRupees, getUserPayouts } =
     useEarnings();
 
   const summary = useMemo(
@@ -37,7 +37,7 @@ export default function EarningsDashboard() {
   );
   const recentPayouts = userPayouts.slice(0, 3);
 
-  const currencyValue = pointsToCurrency(summary.availablePoints);
+  const currencyValue = creditsToRupees(summary.availablePoints);
 
   return (
     <View style={s.container}>
@@ -59,9 +59,9 @@ export default function EarningsDashboard() {
               <Coins size={26} color="#FFFFFF" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={s.heroLabel}>Available Points</Text>
+              <Text style={s.heroLabel}>Available Credits</Text>
               <Text style={s.heroPoints}>{summary.availablePoints.toLocaleString()}</Text>
-              <Text style={s.heroValue}>≈ {formatPrice(currencyValue)}</Text>
+              <Text style={s.heroValue}>≈ {formatPrice(currencyValue)} (store credit rate)</Text>
             </View>
           </View>
           <View style={s.heroActions}>
@@ -89,7 +89,7 @@ export default function EarningsDashboard() {
             icon={<TrendingUp size={18} color="#10B981" />}
             iconBg="#ECFDF5"
             value={summary.currentMonthPoints.toString()}
-            label="This Month"
+            label="This Month (cr)"
           />
           <StatTile
             icon={<Sparkles size={18} color="#8B5CF6" />}
@@ -101,7 +101,7 @@ export default function EarningsDashboard() {
             icon={<Trophy size={18} color="#F59E0B" />}
             iconBg="#FFFBEB"
             value={summary.totalPointsEarned.toLocaleString()}
-            label="Total Earned"
+            label="Total Earned (cr)"
           />
         </View>
 
@@ -125,7 +125,7 @@ export default function EarningsDashboard() {
                 </View>
                 <View style={s.rulePointsWrap}>
                   <Text style={s.rulePoints}>+{rule.points}</Text>
-                  <Text style={s.rulePointsUnit}>pts</Text>
+                  <Text style={s.rulePointsUnit}>cr</Text>
                 </View>
               </View>
             ))}
@@ -144,7 +144,7 @@ export default function EarningsDashboard() {
           {recentPayouts.length === 0 ? (
             <View style={s.emptyCard}>
               <Info size={20} color={Colors.light.textTertiary} />
-              <Text style={s.emptyText}>No payouts yet. Redeem your points to get started!</Text>
+              <Text style={s.emptyText}>No payouts yet. Redeem your credits to get started!</Text>
             </View>
           ) : (
             <View style={s.payoutList}>
@@ -166,7 +166,7 @@ export default function EarningsDashboard() {
                     </Text>
                   </View>
                   <View style={s.payoutRight}>
-                    <Text style={s.payoutPoints}>{payout.points} pts</Text>
+                    <Text style={s.payoutPoints}>{payout.credits} cr</Text>
                     <Text style={s.payoutAmount}>{formatPrice(payout.amountCurrency)}</Text>
                   </View>
                 </View>
@@ -178,7 +178,7 @@ export default function EarningsDashboard() {
         <View style={s.infoBanner}>
           <Info size={16} color={Colors.light.textSecondary} />
           <Text style={s.infoText}>
-            Points are awarded when swaps are marked complete. Monthly subscription bonuses are credited on the 1st of each month.
+            Credits are awarded when swaps are marked complete. Teachers earn 50 credits per free session or 80% of paid session price. Monthly subscription bonuses are credited on the 1st of each month.
           </Text>
         </View>
       </ScrollView>

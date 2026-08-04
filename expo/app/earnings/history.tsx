@@ -23,9 +23,10 @@ const sourceLabels: Record<string, string> = {
   swap_completed: 'Swap Completed',
   class_taught: 'Class Taught',
   monthly_subscription: 'Subscription Bonus',
-  bonus: 'Bonus Points',
+  bonus: 'Bonus Credits',
   referral: 'Referral Reward',
   admin_adjustment: 'Admin Adjustment',
+  learner_bonus: 'Learner Bonus',
 };
 
 const methodLabels: Record<string, string> = {
@@ -61,7 +62,7 @@ export default function EarningsHistoryScreen() {
           type: 'payout' as const,
           title: `${methodLabels[p.method] ?? p.method} Payout`,
           subtitle: p.status === 'completed' ? 'Completed' : p.status === 'pending' ? 'Pending review' : p.status,
-          points: -p.points,
+          points: -p.credits,
           amount: p.amountCurrency,
           date: p.createdAt,
           icon: p.method === 'store_credit' ? ('wallet' as const) : ('minus' as const),

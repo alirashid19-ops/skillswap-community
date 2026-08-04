@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, TextInput, View, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CalendarCheck2, Clock, MapPin, Sparkles, X, ArrowRight, Check, AlertTriangle, Coins } from 'lucide-react-native';
+import { CalendarCheck2, Clock, MapPin, Sparkles, X, ArrowRight, Check, AlertTriangle, Coins, IndianRupee } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import Colors from '../constants/colors';
+import { formatPrice } from '../constants/locale';
 import type { SkillSwapRequest, SkillWithUser } from '../types';
 import { useCurrentUser } from '../providers/current-user';
 import { useSkillSwaps } from '../providers/skill-swaps';
+import { getSwapRequestCost, getSessionCreditCost, getPlatformFee, formatCredits } from '../lib/payments';
 
 interface SkillSwapRequestModalProps { visible: boolean; skill: SkillWithUser; onClose: () => void; }
 interface TimeOption { id: string; label: string; startISO: string; endISO: string; }
@@ -43,8 +45,12 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
   const [introMessage, setIntroMessage] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  const swapCost = currentUser.premiumTier === 'free' ? 5 : 0;
-  const hasEnoughCredits = currentUser.credits >= swapCost;
+  const platformFee = getPlatformFee(currentUser);
+  const sessionCost = getSessionCreditCost(skill);
+  const swapCost = platformFee; // paid upfront at request time
+  const totalCost = swapCost;
+  const hasEnoughCredits = currentUser.credits >= totalCost;
+  const isPaidSession = sessionCost > 0;
   type SwapPayload = Parameters<typeof createSwapRequest>[0];
 
   const { mutateAsync: submitSwapRequest, reset: resetSwapMutation, isPending: isSubmitting } = useMutation<SkillSwapRequest, unknown, SwapPayload>({
@@ -78,8 +84,8 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
     setError(null);
     if (step < 2) { setStep((p) => p + 1); return; }
     const submit = async () => {
-      if (!hasEnoughCredits && swapCost > 0) { setError(`You need ${swapCost - currentUser.credits} more credits.`); return; }
-      if (swapCost > 0) { spendCredits(swapCost); }
+      if (!hasEnoughCredits && totalCost > 0) { setError(`You need ${totalCost - currentUser.credits} more credits.`); return; }
+      if (totalCost > 0) { spendCredits(totalCost); }
       try {
         const createdSwap = await submitSwapRequest({
           recipientId: skill.user.id, recipientSkillId: skill.id, requesterSkillId: selectedSkillId,
@@ -91,7 +97,7 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
       } catch (e) { console.log('[SkillSwap] Failed', e); setError('Unable to create the request. Try again.'); }
     };
     void submit();
-  }, [canAdvance, introMessage, isSubmitting, mergedLocation, onClose, router, selectedSkillId, selectedTimes, skill.id, skill.user.id, spendCredits, step, submitSwapRequest, swapCost]);
+  }, [canAdvance, introMessage, isSubmitting, mergedLocation, onClose, router, selectedSkillId, selectedTimes, skill.id, skill.user.id, spendCredits, step, submitSwapRequest, totalCost]);
 
   const activeSkill = useMemo(() => currentUser.skillsOffered.find((c) => c.id === selectedSkillId) ?? null, [currentUser.skillsOffered, selectedSkillId]);
 
@@ -171,19 +177,49 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}><Coins size={20} color="#F59E0B" /></View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '600' as const, color: '#92400E', marginBottom: 2 }}>Swap Request Cost</Text>
-                        <Text style={{ fontSize: 18, fontWeight: '700' as const, color: '#78350F' }}>{swapCost === 0 ? <Text style={{ color: '#15803D' }}>Free with Premium</Text> : `${swapCost} Credits`}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600' as const, color: '#92400E', marginBottom: 2 }}>Payment Summary</Text>
+                        <Text style={{ fontSize: 18, fontWeight: '700' as const, color: '#78350F' }}>{totalCost === 0 ? 'Free Request' : `${totalCost} Credits`}</Text>
                       </View>
                     </View>
-                    {!hasEnoughCredits && (
+
+                    <View style={{ gap: 8, paddingTop: 4 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 13, color: '#92400E' }}>Platform fee (request):</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '600' as const, color: '#78350F' }}>{platformFee === 0 ? 'Free (Premium)' : `${platformFee} cr`}</Text>
+                      </View>
+                      {isPaidSession && (
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ fontSize: 13, color: '#92400E' }}>Session cost (at completion):</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '600' as const, color: '#78350F' }}>{sessionCost} cr ({formatPrice(sessionCost)})</Text>
+                        </View>
+                      )}
+                      {!isPaidSession && (
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={{ fontSize: 13, color: '#92400E' }}>Session type:</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '600' as const, color: '#15803D' }}>Free skill exchange</Text>
+                        </View>
+                      )}
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 6, borderTopWidth: 1, borderTopColor: '#FDE68A' }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600' as const, color: '#92400E' }}>Pay now:</Text>
+                        <Text style={{ fontSize: 16, fontWeight: '800' as const, color: '#78350F' }}>{totalCost === 0 ? 'Free' : `${totalCost} cr`}</Text>
+                      </View>
+                    </View>
+
+                    {!hasEnoughCredits && totalCost > 0 && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#FEF3C7', padding: 10, borderRadius: 10 }}>
-                        <AlertTriangle size={16} color="#F59E0B" /><Text style={{ fontSize: 13, fontWeight: '600' as const, color: '#92400E' }}>You need {swapCost - currentUser.credits} more credits</Text>
+                        <AlertTriangle size={16} color="#F59E0B" /><Text style={{ fontSize: 13, fontWeight: '600' as const, color: '#92400E' }}>You need {totalCost - currentUser.credits} more credits</Text>
                       </View>
                     )}
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#FDE68A' }}>
                       <Text style={{ fontSize: 13, color: '#92400E' }}>Your Balance:</Text>
-                      <Text style={{ fontSize: 14, fontWeight: '700' as const, color: '#78350F' }}>{currentUser.credits} Credits</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '700' as const, color: '#78350F' }}>{formatCredits(currentUser.credits)}</Text>
                     </View>
+                    {isPaidSession && (
+                      <View style={{ backgroundColor: '#F0FDF4', borderRadius: 10, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <IndianRupee size={14} color="#15803D" />
+                        <Text style={{ fontSize: 12, color: '#15803D', fontWeight: '500' as const }}>Session cost charged when swap completes. Teacher earns 80%.</Text>
+                      </View>
+                    )}
                   </View>
                   <Text style={st.sectionLabel}>Location & intro note</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 8, paddingRight: 24 }}>

@@ -3,6 +3,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { SkillSwapRequest, SkillSwapStatus, SwapMessage, SwapTimeProposal } from '../types';
 import { useCurrentUser } from './current-user';
 import { useEarnings } from './earnings';
+import { getSessionCreditCost, getTeacherSessionEarnings, LEARNER_SWAP_COMPLETION_BONUS } from '../lib/payments';
 
 interface CreateSwapRequestInput {
   recipientId: string;
@@ -88,8 +89,8 @@ const mapProposals = (
 };
 
 export const [SkillSwapsProvider, useSkillSwaps] = createContextHook<SkillSwapsContextValue>(() => {
-  const { currentUser, allUsers } = useCurrentUser();
-  const { awardPoints } = useEarnings();
+  const { currentUser, allUsers, earnCredits } = useCurrentUser();
+  const { processClassPayment } = useEarnings();
   const [swaps, setSwaps] = useState<SkillSwapRequest[]>(() => {
     const lookupSkillId = (userId: string): string => {
       const user = allUsers.find((candidate) => candidate.id === userId);
@@ -381,23 +382,31 @@ export const [SkillSwapsProvider, useSkillSwaps] = createContextHook<SkillSwapsC
     if (completedSwap) {
       const teacherId = completedSwap.recipientId;
       const studentId = completedSwap.requesterId;
-      awardPoints({
-        userId: teacherId,
-        amount: 50,
-        source: 'class_taught',
-        description: 'Taught a skill swap session',
+      // Look up the skill being taught to determine session cost
+      const teacherUser = allUsers.find(u => u.id === teacherId);
+      const taughtSkill = teacherUser?.skillsOffered.find(s => s.id === completedSwap!.recipientSkillId);
+      const sessionCredits = taughtSkill ? getSessionCreditCost(taughtSkill) : 0;
+      const skillTitle = taughtSkill?.title ?? 'skill session';
+
+      const { teacherEarned, learnerEarned } = processClassPayment({
+        teacherId,
+        learnerId: studentId,
+        sessionCredits,
         swapId: requestId,
+        skillTitle,
       });
-      awardPoints({
-        userId: studentId,
-        amount: 10,
-        source: 'swap_completed',
-        description: 'Completed a skill swap session',
-        swapId: requestId,
-      });
-      console.log('[Earnings] Points awarded for swap completion', { teacherId, studentId, swapId: requestId });
+
+      // Award credits to current user if they are the teacher or learner
+      if (teacherId === currentUser.id) {
+        earnCredits(teacherEarned);
+      }
+      if (studentId === currentUser.id) {
+        earnCredits(learnerEarned);
+      }
+
+      console.log('[Earnings] Credits awarded for swap completion', { teacherId, studentId, teacherEarned, learnerEarned, sessionCredits, swapId: requestId });
     }
-  }, [addMessage, currentUser.id, awardPoints]);
+  }, [addMessage, currentUser.id, allUsers, processClassPayment, earnCredits]);
 
   const getSwapById = useCallback((requestId: string) => {
     return swaps.find((swap) => swap.id === requestId);

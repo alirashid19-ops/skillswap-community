@@ -5,6 +5,7 @@ import { mockUsers } from '../mocks/data';
 import type { MatchRecommendation, OnboardingRole, Skill, SkillCategory, SkillLevel, User } from '../types';
 import { computeMatchRecommendations, getUserRole } from '../lib/matching';
 import type { OnboardingData } from './onboarding';
+import { creditsToRupees } from '../lib/payments';
 
 const ONBOARDING_KEY = '@skillswap/onboarding_complete';
 
@@ -23,6 +24,7 @@ interface CurrentUserContextValue {
   addLearnSkill: (title: string) => void;
   removeLearnSkill: (title: string) => void;
   spendCredits: (amount: number) => boolean;
+  earnCredits: (amount: number) => void;
   refreshRecommendations: () => void;
 }
 
@@ -107,6 +109,11 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
     return success;
   }, []);
 
+  const earnCredits = useCallback((amount: number) => {
+    if (amount <= 0) return;
+    setCurrentUser(prev => ({ ...prev, credits: prev.credits + amount }));
+  }, []);
+
   // On mount, load any previously-saved onboarding data from AsyncStorage so the
   // user's role and skills persist across app restarts.
   useEffect(() => {
@@ -182,9 +189,10 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
       addLearnSkill,
       removeLearnSkill,
       spendCredits,
+      earnCredits,
       refreshRecommendations,
     };
-  }, [currentUser, recommendations, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, applyOnboardingData, addSkill, removeSkill, addLearnSkill, removeLearnSkill, spendCredits, refreshRecommendations]);
+  }, [currentUser, recommendations, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, applyOnboardingData, addSkill, removeSkill, addLearnSkill, removeLearnSkill, spendCredits, earnCredits, refreshRecommendations]);
 
   return value;
 });

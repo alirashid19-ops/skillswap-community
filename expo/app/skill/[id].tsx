@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { MapPin, Star, Users, ArrowRight, Award, Clock, CalendarCheck2, IndianRupee, Sparkles, Trash2 } from 'lucide-react-native';
+import { MapPin, Star, Users, ArrowRight, Award, Clock, CalendarCheck2, IndianRupee, Sparkles, Trash2, Coins } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/colors';
@@ -13,6 +13,7 @@ import { useSkillSwaps } from '../../providers/skill-swaps';
 import { useCurrentUser } from '../../providers/current-user';
 import type { SkillSwapStatus } from '../../types';
 import { formatPrice } from '../../constants/locale';
+import { getSessionCreditCost, formatCredits } from '../../lib/payments';
 
 const swapStatusPalette: Record<SkillSwapStatus | 'fallback', { bg: string; border: string }> = {
   pending: { bg: 'rgba(249, 115, 22, 0.15)', border: 'rgba(249, 115, 22, 0.4)' },
@@ -216,16 +217,24 @@ export default function SkillDetailScreen() {
                 </View>
               )}
               {skill.pricingModel && skill.pricingModel !== 'free' && (
-                <View style={styles.priceRow}>
-                  <IndianRupee size={20} color="#10B981" />
-                  <Text style={styles.priceValue}>
-                    {skill.pricingModel === 'per_session'
-                      ? `${formatPrice(skill.pricePerSession ?? 0)}`
-                      : `${formatPrice(skill.monthlyPrice ?? 0)}`}
-                  </Text>
-                  <Text style={styles.priceUnit}>
-                    {skill.pricingModel === 'per_session' ? '/ session' : '/ month'}
-                  </Text>
+                <View>
+                  <View style={styles.priceRow}>
+                    <IndianRupee size={20} color="#10B981" />
+                    <Text style={styles.priceValue}>
+                      {skill.pricingModel === 'per_session'
+                        ? `${formatPrice(skill.pricePerSession ?? 0)}`
+                        : `${formatPrice(skill.monthlyPrice ?? 0)}`}
+                    </Text>
+                    <Text style={styles.priceUnit}>
+                      {skill.pricingModel === 'per_session' ? '/ session' : '/ month'}
+                    </Text>
+                  </View>
+                  <View style={styles.creditEquivalentRow}>
+                    <Coins size={14} color="#F59E0B" />
+                    <Text style={styles.creditEquivalentText}>
+                      = {formatCredits(getSessionCreditCost(skill))} — teacher earns 80%
+                    </Text>
+                  </View>
                 </View>
               )}
               {skill.pricingModel === 'free' && (
@@ -569,6 +578,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700' as const,
     color: '#10B981',
+  },
+  creditEquivalentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  creditEquivalentText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: Colors.light.textSecondary,
   },
   wantsTags: {
     flexDirection: 'row',

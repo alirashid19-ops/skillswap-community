@@ -7,6 +7,7 @@ import { formatPrice } from '@/constants/locale';
 import { useCurrentUser } from '@/providers/current-user';
 import { useEarnings } from '@/providers/earnings';
 import type { PayoutMethod } from '@/types';
+import { getPayoutRate, MIN_PAYOUT_CREDITS } from '@/lib/payments';
 
 type Method = PayoutMethod;
 
@@ -20,7 +21,7 @@ const METHODS: { id: Method; label: string; icon: typeof Wallet; desc: string }[
 export default function PayoutScreen() {
   const router = useRouter();
   const { currentUser } = useCurrentUser();
-  const { getSummary, pointsToCurrency, requestPayout } = useEarnings();
+  const { getSummary, creditsToRupees, requestPayout, minPayoutCredits } = useEarnings();
 
   const summary = useMemo(() => getSummary(currentUser.id), [getSummary, currentUser.id]);
   const [selectedMethod, setSelectedMethod] = useState<Method>('store_credit');
@@ -31,10 +32,10 @@ export default function PayoutScreen() {
   const [ifscCode, setIfscCode] = useState<string>('');
   const [paypalEmail, setPaypalEmail] = useState<string>('');
 
-  const requestedPoints = parseInt(pointsInput || '0', 10);
+  const requestedCredits = parseInt(pointsInput || '0', 10);
   const isValid =
-    requestedPoints > 0 &&
-    requestedPoints <= summary.availablePoints &&
+    requestedCredits >= minPayoutCredits &&
+    requestedCredits <= summary.availablePoints &&
     (selectedMethod === 'store_credit' ||
       (selectedMethod === 'upi' && upiId.trim().length > 4) ||
       (selectedMethod === 'bank_transfer' &&
@@ -52,7 +53,7 @@ export default function PayoutScreen() {
       userId: currentUser.id,
       userName: currentUser.name,
       userAvatar: currentUser.avatarUrl,
-      points: requestedPoints,
+      credits: requestedCredits,
       method: selectedMethod,
       payoutDetails:
         selectedMethod === 'upi'
@@ -63,7 +64,7 @@ export default function PayoutScreen() {
           ? { paypalEmail }
           : undefined,
     });
-    Alert.alert('Request Submitted!', `Your payout of ${requestedPoints} points (≈ ${formatPrice(pointsToCurrency(requestedPoints))}) is pending review.`, [
+    Alert.alert('Request Submitted!', `Your payout of ${requestedCredits} credits (≈ ${formatPrice(creditsToRupees(requestedCredits, selectedMethod))}) is pending review.`, [
       { text: 'OK', onPress: () => router.replace('/earnings' as any) },
     ]);
   };
@@ -84,8 +85,8 @@ export default function PayoutScreen() {
           <Coins size={24} color="#6366F1" />
           <View style={{ flex: 1 }}>
             <Text style={s.balanceLabel}>Available Balance</Text>
-            <Text style={s.balanceValue}>{summary.availablePoints.toLocaleString()} points</Text>
-            <Text style={s.balanceCurrency}>≈ {formatPrice(pointsToCurrency(summary.availablePoints))}</Text>
+            <Text style={s.balanceValue}>{summary.availablePoints.toLocaleString()} credits</Text>
+            <Text style={s.balanceCurrency}>≈ {formatPrice(creditsToRupees(summary.availablePoints))}</Text>
           </View>
         </View>
 
@@ -113,14 +114,14 @@ export default function PayoutScreen() {
           })}
         </View>
 
-        <Text style={s.label}>Points to Redeem</Text>
+        <Text style={s.label}>Credits to Redeem</Text>
         <View style={s.inputWrap}>
           <Coins size={18} color={Colors.light.textSecondary} />
           <TextInput
             style={s.input}
             value={pointsInput}
             onChangeText={setPointsInput}
-            placeholder="Enter points amount"
+            placeholder="Enter credits amount"
             placeholderTextColor={Colors.light.textTertiary}
             keyboardType="numeric"
           />
@@ -128,10 +129,10 @@ export default function PayoutScreen() {
             <Text style={s.maxBtn}>MAX</Text>
           </TouchableOpacity>
         </View>
-        {requestedPoints > 0 && (
+        {requestedCredits > 0 && (
           <View style={s.previewCard}>
-            <Text style={s.previewLabel}>You'll receive</Text>
-            <Text style={s.previewValue}>{formatPrice(pointsToCurrency(requestedPoints))}</Text>
+            <Text style={s.previewLabel}>You'll receive ({getPayoutRate(selectedMethod) === 1 ? 'no fee' : `rate: ₹${getPayoutRate(selectedMethod)}/credit`})</Text>
+            <Text style={s.previewValue}>{formatPrice(creditsToRupees(requestedCredits, selectedMethod))}</Text>
           </View>
         )}
 
@@ -181,9 +182,10 @@ export default function PayoutScreen() {
 
         <View style={s.noteCard}>
           <Text style={s.noteText}>
-            • Store credit payouts are instant.{'\n'}
-            • UPI/Bank transfers take 3-5 business days after approval.{'\n'}
-            • Minimum 100 points per payout request.
+            • Store credit payouts are instant (1:1 rate).{'\n'}
+            • UPI/Bank: ₹0.80 per credit, 3-5 business days.{'\n'}
+            • PayPal: ₹0.75 per credit (international fee).{'\n'}
+            • Minimum {minPayoutCredits} credits per payout request.
           </Text>
         </View>
       </ScrollView>

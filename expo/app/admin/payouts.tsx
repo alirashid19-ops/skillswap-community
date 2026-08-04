@@ -50,7 +50,7 @@ export default function AdminPayoutsScreen() {
   }, [payouts, filter]);
 
   const handleApprove = (payout: PayoutRequest) => {
-    Alert.alert('Approve Payout?', `Approve ${payout.points} points (${formatPrice(payout.amountCurrency)}) for ${payout.userName}?`, [
+    Alert.alert('Approve Payout?', `Approve ${payout.credits} credits (${formatPrice(payout.amountCurrency)}) for ${payout.userName}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Approve',
@@ -65,7 +65,7 @@ export default function AdminPayoutsScreen() {
   const handleReject = (payout: PayoutRequest) => {
     Alert.alert(
       'Reject Payout?',
-      `Reject this payout request from ${payout.userName}? Points will be returned to their balance.`,
+      `Reject this payout request from ${payout.userName}? Credits will be returned to their balance.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -157,7 +157,7 @@ export default function AdminPayoutsScreen() {
                     </View>
                     <Text style={s.payoutMethod}>{methodLabels[payout.method]}</Text>
                     <Text style={s.payoutAmount}>
-                      {payout.points} pts → {formatPrice(payout.amountCurrency)}
+                      {payout.credits} credits → {formatPrice(payout.amountCurrency)}
                     </Text>
                     <Text style={s.payoutDate}>
                       {new Date(payout.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

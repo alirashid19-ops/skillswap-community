@@ -239,7 +239,8 @@ export type EarningSourceType =
   | 'monthly_subscription'
   | 'bonus'
   | 'referral'
-  | 'admin_adjustment';
+  | 'admin_adjustment'
+  | 'learner_bonus';
 
 export type PayoutMethod = 'store_credit' | 'bank_transfer' | 'upi' | 'paypal';
 
@@ -266,7 +267,7 @@ export interface PayoutRequest {
   userId: string;
   userName: string;
   userAvatar: string;
-  points: number;
+  credits: number;
   amountCurrency: number;
   method: PayoutMethod;
   status: PayoutStatus;
