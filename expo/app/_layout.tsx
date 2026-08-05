@@ -232,19 +232,19 @@ export default function RootLayout() {
             <CurrentUserProvider>
               <EarningsProvider>
                 <SkillSwapsProvider>
-                  <ClassesProvider>
                   <NotificationsProvider>
-                    <ResourcesProvider>
-                      <AdminProvider>
-                        <ErrorBoundary>
-                        <GestureHandlerRootView style={styles.container}>
-                          <RootLayoutNav />
-                        </GestureHandlerRootView>
-                        </ErrorBoundary>
-                      </AdminProvider>
-                    </ResourcesProvider>
+                    <ClassesProvider>
+                      <ResourcesProvider>
+                        <AdminProvider>
+                          <ErrorBoundary>
+                          <GestureHandlerRootView style={styles.container}>
+                            <RootLayoutNav />
+                          </GestureHandlerRootView>
+                          </ErrorBoundary>
+                        </AdminProvider>
+                      </ResourcesProvider>
+                    </ClassesProvider>
                   </NotificationsProvider>
-                  </ClassesProvider>
                 </SkillSwapsProvider>
               </EarningsProvider>
             </CurrentUserProvider>
