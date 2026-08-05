@@ -18,6 +18,7 @@ export default function ClassesScreen() {
   const insets = useSafeAreaInsets();
   const { getClassesWithTeachers } = useClasses();
   const { currentUser } = useCurrentUser();
+  const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'swap';
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
@@ -111,14 +112,16 @@ export default function ClassesScreen() {
             <Text style={s.headerTitle}>Group Classes</Text>
             <Text style={s.headerSub}>Learn together with expert teachers</Text>
           </View>
-          <TouchableOpacity
-            style={s.createBtn}
-            onPress={() => router.push('/class/create' as any)}
-            activeOpacity={0.8}
-          >
-            <Plus size={18} color="#FFFFFF" />
-            <Text style={s.createBtnText}>Create</Text>
-          </TouchableOpacity>
+          {isTeacher && (
+            <TouchableOpacity
+              style={s.createBtn}
+              onPress={() => router.push('/class/create' as any)}
+              activeOpacity={0.8}
+            >
+              <Plus size={18} color="#FFFFFF" />
+              <Text style={s.createBtnText}>Create</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={s.searchBar}>
           <Search size={18} color="#FFFFFF" opacity={0.8} />
