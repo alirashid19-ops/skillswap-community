@@ -5,7 +5,7 @@ import { useSkillSwaps } from './skill-swaps';
 import { usePushNotifications } from '../lib/push-notifications';
 import { trpc } from '../lib/trpc';
 
-type NotificationCategory = 'match' | 'swap' | 'reminder' | 'system';
+type NotificationCategory = 'match' | 'swap' | 'reminder' | 'system' | 'class';
 
 type NotificationMetadata = Record<string, unknown>;
 

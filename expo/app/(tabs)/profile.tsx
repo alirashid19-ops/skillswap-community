@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -234,6 +234,16 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Support & Info</Text>
             <View style={styles.supportGrid}>
+              <TouchableOpacity
+                style={styles.supportCard}
+                onPress={() => router.push('/class/my' as any)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.supportIcon, { backgroundColor: Colors.light.primary + '20' }]}>
+                  <Users size={22} color={Colors.light.primary} />
+                </View>
+                <Text style={styles.supportLabel}>My Classes</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={styles.supportCard}
                 onPress={() => router.push('/help' as any)}

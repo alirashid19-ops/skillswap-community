@@ -9,6 +9,7 @@ import { trpc, trpcClient } from "../lib/trpc";
 import { AuthProvider } from "../providers/auth";
 import { CurrentUserProvider } from "../providers/current-user";
 import { SkillSwapsProvider } from "../providers/skill-swaps";
+import { ClassesProvider } from "../providers/classes";
 import { NotificationsProvider } from "../providers/notifications";
 import { ResourcesProvider } from "../providers/resources";
 import { OnboardingProvider } from "../providers/onboarding";
@@ -31,6 +32,33 @@ function RootLayoutNav() {
           headerShown: true,
           presentation: 'card',
         }} 
+      />
+      <Stack.Screen
+        name="class/[id]"
+        options={{
+          headerShown: true,
+          title: 'Class Details',
+        }}
+      />
+      <Stack.Screen
+        name="class/create"
+        options={{
+          headerShown: true,
+          title: 'Create Class',
+        }}
+      />
+      <Stack.Screen
+        name="class/my"
+        options={{
+          headerShown: true,
+          title: 'My Classes',
+        }}
+      />
+      <Stack.Screen
+        name="admin/classes"
+        options={{
+          headerShown: false,
+        }}
       />
       <Stack.Screen 
         name="profile/[id]" 
@@ -204,6 +232,7 @@ export default function RootLayout() {
             <CurrentUserProvider>
               <EarningsProvider>
                 <SkillSwapsProvider>
+                  <ClassesProvider>
                   <NotificationsProvider>
                     <ResourcesProvider>
                       <AdminProvider>
@@ -215,6 +244,7 @@ export default function RootLayout() {
                       </AdminProvider>
                     </ResourcesProvider>
                   </NotificationsProvider>
+                  </ClassesProvider>
                 </SkillSwapsProvider>
               </EarningsProvider>
             </CurrentUserProvider>
