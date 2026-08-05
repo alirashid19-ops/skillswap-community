@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, FlatList, TouchableOpacity, Image, TextInput, RefreshControl, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, X, Calendar, Clock, Users, Coins, Plus, Sparkles } from 'lucide-react-native';
+import { Search, X, Calendar, Clock, Users, Coins, Sparkles } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
@@ -18,7 +18,6 @@ export default function ClassesScreen() {
   const insets = useSafeAreaInsets();
   const { getClassesWithTeachers } = useClasses();
   const { currentUser } = useCurrentUser();
-  const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'swap';
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
   const [refreshing, setRefreshing] = useState(false);
@@ -112,16 +111,6 @@ export default function ClassesScreen() {
             <Text style={s.headerTitle}>Group Classes</Text>
             <Text style={s.headerSub}>Learn together with expert teachers</Text>
           </View>
-          {isTeacher && (
-            <TouchableOpacity
-              style={s.createBtn}
-              onPress={() => router.push('/class/create' as any)}
-              activeOpacity={0.8}
-            >
-              <Plus size={18} color="#FFFFFF" />
-              <Text style={s.createBtnText}>Create</Text>
-            </TouchableOpacity>
-          )}
         </View>
         <View style={s.searchBar}>
           <Search size={18} color="#FFFFFF" opacity={0.8} />

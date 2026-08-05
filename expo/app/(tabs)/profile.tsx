@@ -24,6 +24,7 @@ export default function ProfileScreen() {
   const auth = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { currentUser } = useCurrentUser();
+  const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'swap';
   const { getSummary } = useEarnings();
   const earningsSummary = getSummary(currentUser.id);
   const verificationsQuery = trpc.verification.getVerifications.useQuery();
@@ -234,6 +235,18 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Support & Info</Text>
             <View style={styles.supportGrid}>
+              {isTeacher && (
+                <TouchableOpacity
+                  style={styles.supportCard}
+                  onPress={() => router.push('/class/create' as any)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.supportIcon, { backgroundColor: Colors.light.accent + '20' }]}>
+                    <Plus size={22} color={Colors.light.accent} />
+                  </View>
+                  <Text style={styles.supportLabel}>Create a Group Class</Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={styles.supportCard}
                 onPress={() => router.push('/class/my' as any)}
