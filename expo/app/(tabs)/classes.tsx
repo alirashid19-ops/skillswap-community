@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, FlatList, TouchableOpacity, Image, TextInput, RefreshControl, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, X, Calendar, Clock, Users, Coins, Sparkles } from 'lucide-react-native';
+import { Search, X, Calendar, Clock, Users, Coins, Sparkles, Plus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
@@ -16,7 +16,7 @@ import { formatCredits } from '@/lib/payments';
 export default function ClassesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { getClassesWithTeachers } = useClasses();
+  const { getClassesWithTeachers, isEnrolled, enrollInClass } = useClasses();
   const { currentUser } = useCurrentUser();
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState('All');
@@ -50,10 +50,19 @@ export default function ClassesScreen() {
     return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleJoin = useCallback((item: ClassWithTeacher) => {
+    const result = enrollInClass(item.id);
+    if (result.success) {
+      router.push(`/class/${item.id}` as any);
+    }
+  }, [enrollInClass, router]);
+
   const renderClassCard = useCallback(({ item }: { item: ClassWithTeacher }) => {
     const seatsLeft = item.maxCapacity - item.enrolledCount;
     const fillPct = Math.round((item.enrolledCount / item.maxCapacity) * 100);
     const isFree = item.seatPriceCredits === 0;
+    const enrolled = isEnrolled(item.id, currentUser.id);
+    const isFull = seatsLeft <= 0;
     return (
       <TouchableOpacity
         style={s.card}
@@ -93,11 +102,26 @@ export default function ClassesScreen() {
             ) : (
               <View style={s.priceTag}><Coins size={14} color="#F59E0B" /><Text style={s.priceText}>{formatCredits(item.seatPriceCredits)}</Text></View>
             )}
+            <TouchableOpacity
+              style={[
+                s.joinBtn,
+                enrolled && s.joinBtnEnrolled,
+                isFull && s.joinBtnDisabled,
+              ]}
+              onPress={() => !enrolled && !isFull && handleJoin(item)}
+              activeOpacity={enrolled || isFull ? 1 : 0.7}
+              disabled={enrolled || isFull}
+            >
+              <Plus size={14} color={enrolled ? '#10B981' : isFull ? Colors.light.textTertiary : '#FFFFFF'} />
+              <Text style={[s.joinBtnText, enrolled && s.joinBtnTextEnrolled, isFull && s.joinBtnTextDisabled]}>
+                {enrolled ? 'Enrolled' : isFull ? 'Class Full' : 'Join Class'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
     );
-  }, [router]);
+  }, [router, isEnrolled, currentUser.id, handleJoin]);
 
   return (
     <View style={s.container}>
@@ -213,11 +237,20 @@ const s = StyleSheet.create({
   seatsLeft: { fontSize: 12, color: Colors.light.textTertiary },
   progressBar: { height: 5, backgroundColor: Colors.light.borderLight, borderRadius: 3, marginBottom: 12 },
   progressFill: { height: '100%', backgroundColor: Colors.light.primary, borderRadius: 3 },
-  priceRow: { flexDirection: 'row', alignItems: 'center' },
+  priceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   freeTag: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(16,185,129,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   freeText: { fontSize: 13, fontWeight: '700' as const, color: '#10B981' },
   priceTag: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(245,158,11,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   priceText: { fontSize: 13, fontWeight: '700' as const, color: '#F59E0B' },
+  joinBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: Colors.light.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10,
+  },
+  joinBtnEnrolled: { backgroundColor: 'rgba(16,185,129,0.12)' },
+  joinBtnDisabled: { backgroundColor: Colors.light.backgroundTertiary },
+  joinBtnText: { fontSize: 13, fontWeight: '700' as const, color: '#FFFFFF' },
+  joinBtnTextEnrolled: { color: '#10B981' },
+  joinBtnTextDisabled: { color: Colors.light.textTertiary },
   emptyWrap: { paddingVertical: 60, alignItems: 'center' },
   emptyText: { fontSize: 15, color: Colors.light.textTertiary, fontWeight: '500' as const },
 });
