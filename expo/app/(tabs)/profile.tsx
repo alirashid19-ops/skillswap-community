@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2 } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +16,8 @@ import { mockUsers } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
 import { useCurrentUser } from '@/providers/current-user';
 import { useEarnings } from '@/providers/earnings';
+import * as Sharing from 'expo-sharing';
+import * as Clipboard from 'expo-clipboard';
 import ReviewsSection from '@/components/ReviewsSection';
 import { TrustScoreBadge } from '@/components/TrustScoreBadge';
 
@@ -29,6 +31,20 @@ export default function ProfileScreen() {
   const earningsSummary = getSummary(currentUser.id);
   const verificationsQuery = trpc.verification.getVerifications.useQuery();
   const verifications = verificationsQuery.data;
+
+  const handleShareProfile = async () => {
+    const message = `Check out ${currentUser.name}'s profile on LearnSwap!`;
+    const url = `https://rork.app/project/${process.env.EXPO_PUBLIC_PROJECT_ID}/profile/${currentUser.id}`;
+    try {
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(url, { dialogTitle: message, mimeType: 'text/plain', UTI: 'public.plain-text' });
+      } else {
+        await Clipboard.setStringAsync(url);
+      }
+    } catch (error) {
+      console.log('[Profile] Share cancelled or failed:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     console.log('[Profile] Signing out');
@@ -67,7 +83,16 @@ export default function ProfileScreen() {
               <Award size={16} color="#FFFFFF" />
             </View>
           </View>
-          <Text style={styles.name}>{currentUser.name}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name}>{currentUser.name}</Text>
+            <TouchableOpacity
+              style={styles.shareIconBtn}
+              onPress={handleShareProfile}
+              activeOpacity={0.7}
+            >
+              <Share2 size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
           <View style={styles.locationRow}>
             <MapPin size={16} color="rgba(255,255,255,0.9)" />
             <Text style={styles.location}>{currentUser.location}</Text>
