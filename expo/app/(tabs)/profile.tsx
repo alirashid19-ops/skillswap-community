@@ -440,7 +440,18 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '800' as const,
     color: '#FFFFFF',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
     marginBottom: 8,
+  },
+  shareIconBtn: {
+    padding: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   locationRow: {
     flexDirection: 'row',
