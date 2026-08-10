@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, Clock, Users, Coins, MapPin, Star, Sparkles, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react-native';
+import { Calendar, Clock, Users, Coins, MapPin, Star, Sparkles, CheckCircle2, XCircle, ArrowLeft, Repeat, CreditCard } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
 import { useCurrentUser } from '@/providers/current-user';
-import { formatCredits, getClassEnrollmentCost } from '@/lib/payments';
+import { formatCredits, getClassEnrollmentCost, formatClassSchedule, formatBillingCycle } from '@/lib/payments';
 
 export default function ClassDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -138,11 +138,15 @@ export default function ClassDetailScreen() {
   const formatDate = (iso: string) => {
     return new Date(iso).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   };
+  const formatShortDate = (iso: string) => {
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
   const formatTimeRange = () => {
     const start = new Date(cls.startISO).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     const end = new Date(cls.endISO).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
     return `${start} — ${end}`;
   };
+  const isRecurring = cls.sessionType !== 'single';
 
   return (
     <ScrollView style={s.container} showsVerticalScrollIndicator={false}>
@@ -171,13 +175,34 @@ export default function ClassDetailScreen() {
         <View style={s.metaCard}>
           <View style={s.metaItem}>
             <Calendar size={18} color={Colors.light.primary} />
-            <Text style={s.metaLabel}>{formatDate(cls.startISO)}</Text>
+            <Text style={s.metaLabel}>
+              {isRecurring
+                ? `${formatShortDate(cls.startISO)} — ${formatShortDate(cls.endISO)}`
+                : formatDate(cls.startISO)}
+            </Text>
           </View>
           <View style={s.metaDivider} />
           <View style={s.metaItem}>
             <Clock size={18} color={Colors.light.primary} />
             <Text style={s.metaLabel}>{formatTimeRange()}</Text>
           </View>
+          <View style={s.metaDivider} />
+          <View style={s.metaItem}>
+            <Repeat size={18} color={Colors.light.primary} />
+            <Text style={s.metaLabel}>{formatClassSchedule(cls.sessionType, cls.sessionCount, cls.scheduleDays)}</Text>
+          </View>
+        </View>
+
+        <View style={s.billingCard}>
+          <View style={s.billingBadge}>
+            <CreditCard size={16} color={Colors.light.primary} />
+            <Text style={s.billingBadgeText}>{formatBillingCycle(cls.billingCycle)} billing</Text>
+          </View>
+          <Text style={s.billingSub}>
+            {cls.billingCycle === 'monthly'
+              ? 'Student pays the monthly seat price once for the whole course.'
+              : 'Student pays the seat price once for the enrollment.'}
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -239,7 +264,7 @@ export default function ClassDetailScreen() {
               <View style={s.priceTag}>
                 <Coins size={20} color="#F59E0B" />
                 <Text style={s.priceText}>{formatCredits(cls.seatPriceCredits)}</Text>
-                <Text style={s.pricePerText}>per seat</Text>
+                <Text style={s.pricePerText}>per seat · {cls.billingCycle === 'monthly' ? 'monthly' : 'one-time'}</Text>
               </View>
             )}
           </View>
@@ -270,7 +295,9 @@ export default function ClassDetailScreen() {
                 </TouchableOpacity>
               ) : !enrolled && classOpen && !isFull ? (
                 <TouchableOpacity style={s.enrollBtn} onPress={handleEnroll} activeOpacity={0.8}>
-                  <Text style={s.enrollBtnText}>{isFree ? 'Enroll Free' : `Enroll for ${cls.seatPriceCredits} credits`}</Text>
+                  <Text style={s.enrollBtnText}>
+                    {isFree ? 'Enroll Free' : `Enroll for ${cls.seatPriceCredits} credits ${cls.billingCycle === 'monthly' ? '/month' : ''}`}
+                  </Text>
                 </TouchableOpacity>
               ) : !enrolled && classOpen && isFull ? (
                 <View style={s.fullBtn}>
@@ -311,10 +338,14 @@ const s = StyleSheet.create({
   body: { padding: 20, paddingTop: 16 },
   catText: { fontSize: 12, fontWeight: '700' as const, color: Colors.light.secondary, textTransform: 'uppercase' as const, letterSpacing: 1, marginBottom: 8 },
   title: { fontSize: 24, fontWeight: '800' as const, color: Colors.light.text, marginBottom: 16, lineHeight: 30 },
-  metaCard: { backgroundColor: Colors.light.backgroundTertiary, borderRadius: 16, padding: 16, marginBottom: 16 },
+  metaCard: { backgroundColor: Colors.light.backgroundTertiary, borderRadius: 16, padding: 16, marginBottom: 12 },
   metaItem: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   metaLabel: { fontSize: 15, fontWeight: '600' as const, color: Colors.light.text },
   metaDivider: { height: 1, backgroundColor: Colors.light.border, marginVertical: 12 },
+  billingCard: { backgroundColor: Colors.light.card, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: Colors.light.borderLight },
+  billingBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  billingBadgeText: { fontSize: 15, fontWeight: '700' as const, color: Colors.light.primary },
+  billingSub: { fontSize: 13, color: Colors.light.textSecondary, lineHeight: 18 },
   teacherCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.light.card, borderRadius: 16, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: Colors.light.borderLight },
   teacherAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: Colors.light.border },
   teacherInfo: { flex: 1 },

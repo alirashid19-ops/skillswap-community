@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, FlatList, TouchableOpacity, Image, TextInput, RefreshControl, ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, X, Calendar, Clock, Users, Coins, Sparkles, Plus } from 'lucide-react-native';
+import { Search, X, Calendar, Clock, Users, Coins, Sparkles, Plus, Repeat, CreditCard } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
@@ -11,7 +11,7 @@ import { categories } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
 import { useCurrentUser } from '@/providers/current-user';
 import type { ClassWithTeacher } from '@/types';
-import { formatCredits } from '@/lib/payments';
+import { formatCredits, formatClassSchedule, formatBillingCycle } from '@/lib/payments';
 
 export default function ClassesScreen() {
   const router = useRouter();
@@ -49,6 +49,9 @@ export default function ClassesScreen() {
   const formatTime = (iso: string) => {
     return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   };
+  const formatShortDate = (iso: string) => {
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
 
   const handleJoin = useCallback((item: ClassWithTeacher) => {
     const result = enrollInClass(item.id);
@@ -63,6 +66,7 @@ export default function ClassesScreen() {
     const isFree = item.seatPriceCredits === 0;
     const enrolled = isEnrolled(item.id, currentUser.id);
     const isFull = seatsLeft <= 0;
+    const isRecurring = item.sessionType !== 'single';
     return (
       <TouchableOpacity
         style={s.card}
@@ -78,9 +82,17 @@ export default function ClassesScreen() {
           <Text style={s.title} numberOfLines={2}>{item.title}</Text>
           <View style={s.metaRow}>
             <Calendar size={13} color={Colors.light.textTertiary} />
-            <Text style={s.metaText}>{formatDate(item.startISO)}</Text>
+            <Text style={s.metaText}>
+              {isRecurring
+                ? `${formatShortDate(item.startISO)} — ${formatShortDate(item.endISO)}`
+                : formatDate(item.startISO)}
+            </Text>
+          </View>
+          <View style={s.metaRow}>
             <Clock size={13} color={Colors.light.textTertiary} />
             <Text style={s.metaText}>{formatTime(item.startISO)}</Text>
+            <Repeat size={13} color={Colors.light.primary} />
+            <Text style={[s.metaText, { color: Colors.light.primary }]}>{formatClassSchedule(item.sessionType, item.sessionCount, item.scheduleDays)}</Text>
           </View>
           <View style={s.teacherRow}>
             <Image source={{ uri: item.teacher.avatarUrl }} style={s.teacherAvatar} />
@@ -100,8 +112,15 @@ export default function ClassesScreen() {
             {isFree ? (
               <View style={s.freeTag}><Sparkles size={13} color="#10B981" /><Text style={s.freeText}>Free</Text></View>
             ) : (
-              <View style={s.priceTag}><Coins size={14} color="#F59E0B" /><Text style={s.priceText}>{formatCredits(item.seatPriceCredits)}</Text></View>
+              <View style={s.priceTag}>
+                <Coins size={14} color="#F59E0B" />
+                <Text style={s.priceText}>{formatCredits(item.seatPriceCredits)}</Text>
+              </View>
             )}
+            <View style={s.billingTag}>
+              <CreditCard size={13} color={Colors.light.secondary} />
+              <Text style={s.billingText}>{formatBillingCycle(item.billingCycle)}</Text>
+            </View>
             <TouchableOpacity
               style={[
                 s.joinBtn,
@@ -237,11 +256,13 @@ const s = StyleSheet.create({
   seatsLeft: { fontSize: 12, color: Colors.light.textTertiary },
   progressBar: { height: 5, backgroundColor: Colors.light.borderLight, borderRadius: 3, marginBottom: 12 },
   progressFill: { height: '100%', backgroundColor: Colors.light.primary, borderRadius: 3 },
-  priceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  priceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   freeTag: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(16,185,129,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   freeText: { fontSize: 13, fontWeight: '700' as const, color: '#10B981' },
   priceTag: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(245,158,11,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
   priceText: { fontSize: 13, fontWeight: '700' as const, color: '#F59E0B' },
+  billingTag: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: Colors.light.backgroundTertiary, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: Colors.light.border },
+  billingText: { fontSize: 12, fontWeight: '700' as const, color: Colors.light.secondary },
   joinBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: Colors.light.primary, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10,

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Calendar, Clock, Users, Coins, Image as ImageIcon, Check, Sparkles } from 'lucide-react-native';
@@ -7,9 +7,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { categories } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
-import type { SkillCategory, SkillLevel } from '@/types';
+import type { SkillCategory, SkillLevel, ClassSessionType, ClassBillingCycle } from '@/types';
 
 const LEVELS: SkillLevel[] = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
+const SESSION_TYPES: { key: ClassSessionType; label: string }[] = [
+  { key: 'single', label: 'Single Session' },
+  { key: 'daily', label: 'Daily Course' },
+  { key: 'weekly', label: 'Weekly Course' },
+];
+const BILLING_CYCLES: { key: ClassBillingCycle; label: string }[] = [
+  { key: 'one_time', label: 'One-time' },
+  { key: 'monthly', label: 'Monthly' },
+];
+const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DEFAULT_COVER = 'https://images.unsplash.com/photo-1497486751825-1233686d5d80?w=800';
 
 export default function CreateClassScreen() {
@@ -22,26 +32,58 @@ export default function CreateClassScreen() {
   const [category, setCategory] = useState<SkillCategory>('Technology');
   const [level, setLevel] = useState<SkillLevel>('Beginner');
   const [coverUrl, setCoverUrl] = useState(DEFAULT_COVER);
-  const [dateStr, setDateStr] = useState('');
+  const [sessionType, setSessionType] = useState<ClassSessionType>('single');
+  const [billingCycle, setBillingCycle] = useState<ClassBillingCycle>('one_time');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [scheduleDays, setScheduleDays] = useState<string[]>([]);
   const [capacity, setCapacity] = useState('10');
   const [seatPrice, setSeatPrice] = useState('0');
   const [submitting, setSubmitting] = useState(false);
 
+  const isWeekly = sessionType === 'weekly';
+  const isRecurring = sessionType !== 'single';
+  const sessionCount = useMemo(() => {
+    if (sessionType === 'single') return 1;
+    if (!startDate || !endDate) return 0;
+    const start = new Date(`${startDate}T00:00:00`).getTime();
+    const end = new Date(`${endDate}T00:00:00`).getTime();
+    if (Number.isNaN(start) || Number.isNaN(end) || end < start) return 0;
+    const days = Math.floor((end - start) / 86400000) + 1;
+    if (sessionType === 'daily') return days;
+    if (scheduleDays.length === 0) return 0;
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let count = 0;
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start + i * 86400000);
+      if (scheduleDays.includes(dayNames[d.getDay()])) count++;
+    }
+    return count;
+  }, [sessionType, startDate, endDate, scheduleDays]);
+
+  const toggleDay = (day: string) => {
+    setScheduleDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  };
+
   const handleCreate = useCallback(() => {
     if (title.trim().length < 3) { Alert.alert('Title too short', 'Please enter at least 3 characters.'); return; }
     if (description.trim().length < 10) { Alert.alert('Description too short', 'Please enter at least 10 characters.'); return; }
-    if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) { Alert.alert('Invalid date', 'Use format YYYY-MM-DD (e.g. 2026-08-10).'); return; }
+    if (!startDate.match(/^\d{4}-\d{2}-\d{2}$/)) { Alert.alert('Invalid start date', 'Use format YYYY-MM-DD (e.g. 2026-08-10).'); return; }
     if (!startTime.match(/^\d{2}:\d{2}$/) || !endTime.match(/^\d{2}:\d{2}$/)) { Alert.alert('Invalid time', 'Use 24h format HH:MM (e.g. 14:30).'); return; }
+    if (isRecurring && !endDate.match(/^\d{4}-\d{2}-\d{2}$/)) { Alert.alert('Invalid end date', 'Use format YYYY-MM-DD for the last session.'); return; }
+    if (isWeekly && scheduleDays.length === 0) { Alert.alert('Select days', 'Pick at least one weekday for the weekly course.'); return; }
+    if (sessionCount === 0) { Alert.alert('Invalid schedule', 'Check start/end dates and selected days.'); return; }
     const cap = parseInt(capacity, 10);
     if (!cap || cap < 1 || cap > 500) { Alert.alert('Invalid capacity', 'Enter a number between 1 and 500.'); return; }
     const price = parseInt(seatPrice, 10) || 0;
     if (price < 0) { Alert.alert('Invalid price', 'Price cannot be negative.'); return; }
 
-    // Build ISO timestamps
-    const startISO = new Date(`${dateStr}T${startTime}:00`).toISOString();
-    const endISO = new Date(`${dateStr}T${endTime}:00`).toISOString();
+    const startISO = new Date(`${startDate}T${startTime}:00`).toISOString();
+    const endISO = isRecurring
+      ? new Date(`${endDate}T${endTime}:00`).toISOString()
+      : new Date(`${startDate}T${endTime}:00`).toISOString();
     if (new Date(endISO) <= new Date(startISO)) { Alert.alert('Invalid time range', 'End time must be after start time.'); return; }
 
     setSubmitting(true);
@@ -53,6 +95,9 @@ export default function CreateClassScreen() {
       coverImageUrl: coverUrl.trim() || DEFAULT_COVER,
       startISO,
       endISO,
+      sessionType,
+      billingCycle,
+      scheduleDays: isWeekly ? scheduleDays : undefined,
       maxCapacity: cap,
       seatPriceCredits: price,
     });
@@ -61,7 +106,7 @@ export default function CreateClassScreen() {
       { text: 'View', onPress: () => router.replace(`/class/${cls.id}` as any) },
       { text: 'Done', onPress: () => router.back() },
     ]);
-  }, [title, description, category, level, coverUrl, dateStr, startTime, endTime, capacity, seatPrice, createClass, router]);
+  }, [title, description, category, level, coverUrl, startDate, endDate, startTime, endTime, sessionType, billingCycle, scheduleDays, isRecurring, isWeekly, sessionCount, capacity, seatPrice, createClass, router]);
 
   return (
     <ScrollView style={s.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -105,15 +150,58 @@ export default function CreateClassScreen() {
           <TextInput style={[s.input, { flex: 1 }]} value={coverUrl} onChangeText={setCoverUrl} placeholder="https://..." placeholderTextColor={Colors.light.textTertiary} autoCapitalize="none" />
         </View>
 
-        <Text style={s.label}>Date (YYYY-MM-DD)</Text>
-        <View style={s.inputRow}>
-          <Calendar size={18} color={Colors.light.textTertiary} />
-          <TextInput style={[s.input, { flex: 1 }]} value={dateStr} onChangeText={setDateStr} placeholder="2026-08-10" placeholderTextColor={Colors.light.textTertiary} autoCapitalize="none" />
+        <Text style={s.label}>Session Type</Text>
+        <View style={s.chipRow}>
+          {SESSION_TYPES.map(type => (
+            <TouchableOpacity key={type.key} style={[s.chip, sessionType === type.key && s.chipActive]} onPress={() => setSessionType(type.key)} activeOpacity={0.7}>
+              <Text style={[s.chipText, sessionType === type.key && s.chipTextActive]}>{type.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={s.label}>Billing</Text>
+        <View style={s.chipRow}>
+          {BILLING_CYCLES.map(cycle => (
+            <TouchableOpacity key={cycle.key} style={[s.chip, billingCycle === cycle.key && s.chipActive]} onPress={() => setBillingCycle(cycle.key)} activeOpacity={0.7}>
+              <Text style={[s.chipText, billingCycle === cycle.key && s.chipTextActive]}>{cycle.label}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         <View style={s.timeRow}>
           <View style={{ flex: 1 }}>
-            <Text style={s.label}>Start (HH:MM)</Text>
+            <Text style={s.label}>Start Date</Text>
+            <View style={s.inputRow}>
+              <Calendar size={18} color={Colors.light.textTertiary} />
+              <TextInput style={[s.input, { flex: 1 }]} value={startDate} onChangeText={setStartDate} placeholder="2026-08-10" placeholderTextColor={Colors.light.textTertiary} autoCapitalize="none" />
+            </View>
+          </View>
+          <View style={{ width: 12 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.label}>{isRecurring ? 'End Date' : 'End Date (optional)'}</Text>
+            <View style={s.inputRow}>
+              <Calendar size={18} color={Colors.light.textTertiary} />
+              <TextInput style={[s.input, { flex: 1 }]} value={endDate} onChangeText={setEndDate} placeholder={isRecurring ? '2026-08-31' : ''} placeholderTextColor={Colors.light.textTertiary} autoCapitalize="none" editable={isRecurring} />
+            </View>
+          </View>
+        </View>
+
+        {isWeekly && (
+          <>
+            <Text style={s.label}>Weekly Days</Text>
+            <View style={s.chipRow}>
+              {WEEK_DAYS.map(day => (
+                <TouchableOpacity key={day} style={[s.chip, scheduleDays.includes(day) && s.chipActive]} onPress={() => toggleDay(day)} activeOpacity={0.7}>
+                  <Text style={[s.chipText, scheduleDays.includes(day) && s.chipTextActive]}>{day}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        <View style={s.timeRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.label}>Start Time (HH:MM)</Text>
             <View style={s.inputRow}>
               <Clock size={18} color={Colors.light.textTertiary} />
               <TextInput style={[s.input, { flex: 1 }]} value={startTime} onChangeText={setStartTime} placeholder="14:30" placeholderTextColor={Colors.light.textTertiary} autoCapitalize="none" />
@@ -121,13 +209,19 @@ export default function CreateClassScreen() {
           </View>
           <View style={{ width: 12 }} />
           <View style={{ flex: 1 }}>
-            <Text style={s.label}>End (HH:MM)</Text>
+            <Text style={s.label}>End Time (HH:MM)</Text>
             <View style={s.inputRow}>
               <Clock size={18} color={Colors.light.textTertiary} />
               <TextInput style={[s.input, { flex: 1 }]} value={endTime} onChangeText={setEndTime} placeholder="16:00" placeholderTextColor={Colors.light.textTertiary} autoCapitalize="none" />
             </View>
           </View>
         </View>
+
+        {isRecurring && sessionCount > 0 && (
+          <View style={s.sessionCountNote}>
+            <Text style={s.sessionCountText}>This course will have {sessionCount} session{sessionCount === 1 ? '' : 's'}.</Text>
+          </View>
+        )}
 
         <View style={s.timeRow}>
           <View style={{ flex: 1 }}>
@@ -156,7 +250,9 @@ export default function CreateClassScreen() {
         {parseInt(seatPrice, 10) > 0 && (
           <View style={s.paidNote}>
             <Coins size={14} color="#F59E0B" />
-            <Text style={s.paidNoteText}>Paid class — you'll earn 80% of seat price × enrolled students. Platform takes 20%.</Text>
+            <Text style={s.paidNoteText}>
+              {billingCycle === 'monthly' ? 'Monthly billing' : 'One-time billing'} — you'll earn 80% of the seat price × enrolled students. Platform takes 20%.
+            </Text>
           </View>
         )}
 
@@ -185,6 +281,8 @@ const s = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: '600' as const, color: Colors.light.textSecondary },
   chipTextActive: { color: '#FFFFFF' },
   timeRow: { flexDirection: 'row' },
+  sessionCountNote: { backgroundColor: Colors.light.primaryLight + '20', borderRadius: 12, padding: 12, marginTop: 12 },
+  sessionCountText: { fontSize: 13, color: Colors.light.primary, fontWeight: '600' as const, textAlign: 'center' },
   freeNote: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(16,185,129,0.1)', borderRadius: 12, padding: 12, marginTop: 16 },
   freeNoteText: { fontSize: 13, color: '#10B981', fontWeight: '500' as const, flex: 1 },
   paidNote: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 12, padding: 12, marginTop: 16 },

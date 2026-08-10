@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Calendar, Clock, Users, Coins, Plus, CheckCircle2, XCircle, Sparkles } from 'lucide-react-native';
+import { Calendar, Clock, Users, Coins, Plus, CheckCircle2, XCircle, Sparkles, Repeat, CreditCard } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { useClasses } from '@/providers/classes';
 import { useCurrentUser } from '@/providers/current-user';
 import type { ClassWithTeacher } from '@/types';
-import { formatCredits } from '@/lib/payments';
+import { formatCredits, formatClassSchedule, formatBillingCycle } from '@/lib/payments';
 
 type Segment = 'teaching' | 'enrolled';
 
@@ -31,10 +31,14 @@ export default function MyClassesScreen() {
     return new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   };
 
+  const formatShortDate = (iso: string) => {
+    return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
+
   const renderClassCard = useCallback(({ item }: { item: ClassWithTeacher }) => {
     const isFree = item.seatPriceCredits === 0;
-    const seatsLeft = item.maxCapacity - item.enrolledCount;
     const isTeacher = item.teacherId === currentUser.id;
+    const isRecurring = item.sessionType !== 'single';
     return (
       <TouchableOpacity
         style={s.card}
@@ -52,9 +56,21 @@ export default function MyClassesScreen() {
           <Text style={s.title} numberOfLines={2}>{item.title}</Text>
           <View style={s.metaRow}>
             <Calendar size={13} color={Colors.light.textTertiary} />
-            <Text style={s.metaText}>{formatDate(item.startISO)}</Text>
+            <Text style={s.metaText}>
+              {isRecurring
+                ? `${formatShortDate(item.startISO)} — ${formatShortDate(item.endISO)}`
+                : formatDate(item.startISO)}
+            </Text>
+          </View>
+          <View style={s.metaRow}>
             <Clock size={13} color={Colors.light.textTertiary} />
             <Text style={s.metaText}>{formatTime(item.startISO)}</Text>
+            <Repeat size={13} color={Colors.light.primary} />
+            <Text style={[s.metaText, { color: Colors.light.primary }]}>{formatClassSchedule(item.sessionType, item.sessionCount, item.scheduleDays)}</Text>
+          </View>
+          <View style={s.metaRow}>
+            <CreditCard size={13} color={Colors.light.secondary} />
+            <Text style={[s.metaText, { color: Colors.light.secondary }]}>{formatBillingCycle(item.billingCycle)}</Text>
           </View>
           {isTeacher ? (
             <View style={s.seatRow}>
