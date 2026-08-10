@@ -320,6 +320,23 @@ export default function SkillDetailScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
+        {isOwner && (
+          <TouchableOpacity
+            style={styles.groupClassButton}
+            onPress={() => router.push(`/class/create?skillId=${skill.id}` as any)}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={['#10B981', '#34D399']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.groupClassButtonGradient}
+            >
+              <Users size={20} color="#FFFFFF" />
+              <Text style={styles.groupClassButtonText}>Create Group Class</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.requestButton, activeSwap && styles.requestButtonActive]}
           onPress={handleRequestPress}
@@ -623,6 +640,7 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: Colors.light.background,
     padding: 20,
+    paddingBottom: 32,
     borderTopWidth: 1,
     borderTopColor: Colors.light.borderLight,
     shadowColor: Colors.light.shadow,
@@ -630,6 +648,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 8,
+    gap: 10,
+  },
+  groupClassButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  groupClassButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+  },
+  groupClassButtonText: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: '#FFFFFF',
   },
   requestButton: {
     borderRadius: 20,

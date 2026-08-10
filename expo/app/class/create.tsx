@@ -1,13 +1,14 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Calendar, Clock, Users, Coins, Image as ImageIcon, Check, Sparkles } from 'lucide-react-native';
+import { useCallback, useMemo, useState, useEffect } from 'react';
+import { Alert, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Calendar, Clock, Users, Coins, Image as ImageIcon, Check, Sparkles, Layers } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { categories } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
-import type { SkillCategory, SkillLevel, ClassSessionType, ClassBillingCycle } from '@/types';
+import { useCurrentUser } from '@/providers/current-user';
+import type { SkillCategory, SkillLevel, ClassSessionType, ClassBillingCycle, Skill } from '@/types';
 
 const LEVELS: SkillLevel[] = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
 const SESSION_TYPES: { key: ClassSessionType; label: string }[] = [
@@ -26,21 +27,32 @@ export default function CreateClassScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { createClass } = useClasses();
+  const { currentUser } = useCurrentUser();
+  const { skillId } = useLocalSearchParams<{ skillId?: string }>();
+  const offeredSkills = currentUser.skillsOffered ?? [];
+  const selectedSkill = useMemo<Skill | undefined>(() =>
+    skillId ? offeredSkills.find(s => s.id === skillId) : undefined,
+  [skillId, offeredSkills]);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<SkillCategory>('Technology');
-  const [level, setLevel] = useState<SkillLevel>('Beginner');
-  const [coverUrl, setCoverUrl] = useState(DEFAULT_COVER);
+  const [title, setTitle] = useState(selectedSkill?.title ?? '');
+  const [description, setDescription] = useState(selectedSkill?.description ?? '');
+  const [category, setCategory] = useState<SkillCategory>(selectedSkill?.category ?? 'Technology');
+  const [level, setLevel] = useState<SkillLevel>(selectedSkill?.level ?? 'Beginner');
+  const [coverUrl, setCoverUrl] = useState(selectedSkill?.imageUrl ?? DEFAULT_COVER);
   const [sessionType, setSessionType] = useState<ClassSessionType>('single');
-  const [billingCycle, setBillingCycle] = useState<ClassBillingCycle>('one_time');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [scheduleDays, setScheduleDays] = useState<string[]>([]);
   const [capacity, setCapacity] = useState('10');
-  const [seatPrice, setSeatPrice] = useState('0');
+  const [seatPrice, setSeatPrice] = useState(() => {
+    if (!selectedSkill) return '0';
+    if (selectedSkill.pricingModel === 'per_session') return String(selectedSkill.pricePerSession ?? 0);
+    if (selectedSkill.pricingModel === 'monthly') return String(selectedSkill.monthlyPrice ?? 0);
+    return '0';
+  });
+  const [billingCycle, setBillingCycle] = useState<ClassBillingCycle>(() => selectedSkill?.pricingModel === 'monthly' ? 'monthly' : 'one_time');
   const [submitting, setSubmitting] = useState(false);
 
   const isWeekly = sessionType === 'weekly';
@@ -116,10 +128,39 @@ export default function CreateClassScreen() {
         style={[s.header, { paddingTop: insets.top + 20 }]}
       >
         <Text style={s.headerTitle}>Create a Group Class</Text>
-        <Text style={s.headerSub}>Teach multiple students at once</Text>
+        <Text style={s.headerSub}>{selectedSkill ? `From skill: ${selectedSkill.title}` : 'Teach multiple students at once'}</Text>
       </LinearGradient>
 
       <View style={s.form}>
+        {offeredSkills.length > 0 && (
+          <>
+            <Text style={s.label}>Create from your skill</Text>
+            <View style={s.skillPicker}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.skillPickerContent}>
+                <TouchableOpacity
+                  style={[s.skillChip, !selectedSkill && s.skillChipActive]}
+                  onPress={() => router.setParams({})}
+                  activeOpacity={0.7}
+                >
+                  <Layers size={14} color={!selectedSkill ? '#FFFFFF' : Colors.light.textSecondary} />
+                  <Text style={[s.skillChipText, !selectedSkill && s.skillChipTextActive]}>Blank</Text>
+                </TouchableOpacity>
+                {offeredSkills.map(skill => (
+                  <TouchableOpacity
+                    key={skill.id}
+                    style={[s.skillChip, selectedSkill?.id === skill.id && s.skillChipActive]}
+                    onPress={() => router.setParams({ skillId: skill.id })}
+                    activeOpacity={0.7}
+                  >
+                    <Image source={{ uri: skill.imageUrl }} style={s.skillChipImg} />
+                    <Text style={[s.skillChipText, selectedSkill?.id === skill.id && s.skillChipTextActive]} numberOfLines={1}>{skill.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </>
+        )}
+
         <Text style={s.label}>Class Title</Text>
         <TextInput style={s.input} value={title} onChangeText={setTitle} placeholder="e.g. Intro to Watercolor Painting" placeholderTextColor={Colors.light.textTertiary} />
 
@@ -275,6 +316,13 @@ const s = StyleSheet.create({
   input: { backgroundColor: Colors.light.backgroundTertiary, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: Colors.light.text, borderWidth: 1, borderColor: Colors.light.border },
   textArea: { minHeight: 100, paddingTop: 14 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.light.backgroundTertiary, borderRadius: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: Colors.light.border },
+  skillPicker: { marginBottom: 8 },
+  skillPickerContent: { gap: 10 },
+  skillChip: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.light.backgroundTertiary, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: Colors.light.border },
+  skillChipActive: { backgroundColor: Colors.light.primary, borderColor: Colors.light.primary },
+  skillChipImg: { width: 24, height: 24, borderRadius: 6 },
+  skillChipText: { fontSize: 13, fontWeight: '600' as const, color: Colors.light.textSecondary, maxWidth: 140 },
+  skillChipTextActive: { color: '#FFFFFF' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap' as const, gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 12, backgroundColor: Colors.light.backgroundTertiary, borderWidth: 1, borderColor: Colors.light.border },
   chipActive: { backgroundColor: Colors.light.primary, borderColor: Colors.light.primary },
