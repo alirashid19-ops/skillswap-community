@@ -337,21 +337,23 @@ export default function SkillDetailScreen() {
             </LinearGradient>
           </TouchableOpacity>
         )}
-        <TouchableOpacity
-          style={[styles.requestButton, activeSwap && styles.requestButtonActive]}
-          onPress={handleRequestPress}
-          activeOpacity={0.85}
-          testID="request-swap-button"
-        >
-          <LinearGradient
-            colors={activeSwap ? ['#38BDF8', '#6366F1'] : [Colors.light.primary, Colors.light.primaryLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.requestButtonGradient}
+        {!isOwner && (
+          <TouchableOpacity
+            style={[styles.requestButton, activeSwap && styles.requestButtonActive]}
+            onPress={handleRequestPress}
+            activeOpacity={0.85}
+            testID="request-swap-button"
           >
-            <Text style={styles.requestButtonText}>{activeSwap ? 'Open Swap Thread' : 'Request Skill Swap'}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={activeSwap ? ['#38BDF8', '#6366F1'] : [Colors.light.primary, Colors.light.primaryLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.requestButtonGradient}
+            >
+              <Text style={styles.requestButtonText}>{activeSwap ? 'Open Swap Thread' : 'Request Skill Swap'}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
       </View>
 
       <SkillSwapRequestModal

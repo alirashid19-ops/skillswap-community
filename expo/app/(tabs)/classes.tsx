@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import {
-  StyleSheet, Text, View, FlatList, TouchableOpacity, Image, TextInput, RefreshControl, ScrollView,
+  StyleSheet, Text, View, FlatList, TouchableOpacity, Image, TextInput, RefreshControl, ScrollView, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search, X, Calendar, Clock, Users, Coins, Sparkles, Plus, Repeat, CreditCard } from 'lucide-react-native';
@@ -57,6 +57,8 @@ export default function ClassesScreen() {
     const result = enrollInClass(item.id);
     if (result.success) {
       router.push(`/class/${item.id}` as any);
+    } else {
+      Alert.alert('Cannot join', result.error ?? 'Something went wrong.');
     }
   }, [enrollInClass, router]);
 
@@ -217,11 +219,6 @@ const s = StyleSheet.create({
   headerTop: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
   headerTitle: { fontSize: 26, fontWeight: '800' as const, color: '#FFFFFF' },
   headerSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  createBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
-  },
-  createBtnText: { fontSize: 14, fontWeight: '700' as const, color: '#FFFFFF' },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14,

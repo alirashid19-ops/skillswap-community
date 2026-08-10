@@ -17,7 +17,8 @@ export default function MyClassesScreen() {
   const insets = useSafeAreaInsets();
   const { getMyTeachingClasses, getMyEnrolledClasses } = useClasses();
   const { currentUser } = useCurrentUser();
-  const [segment, setSegment] = useState<Segment>('teaching');
+  const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'swap';
+  const [segment, setSegment] = useState<Segment>(isTeacher ? 'teaching' : 'enrolled');
 
   const teachingClasses = useMemo(() => getMyTeachingClasses(), [getMyTeachingClasses]);
   const enrolledClasses = useMemo(() => getMyEnrolledClasses(), [getMyEnrolledClasses]);
@@ -97,14 +98,16 @@ export default function MyClassesScreen() {
       >
         <Text style={s.headerTitle}>My Classes</Text>
         <Text style={s.headerSub}>Manage your teaching and enrolled classes</Text>
-        <TouchableOpacity
-          style={s.createBtn}
-          onPress={() => router.push('/class/create' as any)}
-          activeOpacity={0.8}
-        >
-          <Plus size={18} color="#FFFFFF" />
-          <Text style={s.createBtnText}>Create Class</Text>
-        </TouchableOpacity>
+        {isTeacher && (
+          <TouchableOpacity
+            style={s.createBtn}
+            onPress={() => router.push('/class/create' as any)}
+            activeOpacity={0.8}
+          >
+            <Plus size={18} color="#FFFFFF" />
+            <Text style={s.createBtnText}>Create Class</Text>
+          </TouchableOpacity>
+        )}
       </LinearGradient>
 
       <View style={s.segmentRow}>
@@ -138,7 +141,7 @@ export default function MyClassesScreen() {
                 ? "You haven't created any classes yet."
                 : "You haven't enrolled in any classes yet."}
             </Text>
-            {segment === 'teaching' && (
+            {segment === 'teaching' && isTeacher && (
               <TouchableOpacity style={s.emptyBtn} onPress={() => router.push('/class/create' as any)}>
                 <Plus size={16} color="#FFFFFF" />
                 <Text style={s.emptyBtnText}>Create your first class</Text>
