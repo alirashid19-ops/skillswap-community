@@ -856,4 +856,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
   },
+  companyLine: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: Colors.light.textTertiary,
+    marginTop: 16,
+    marginBottom: 20,
+  },
 });

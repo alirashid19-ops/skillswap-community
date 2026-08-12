@@ -416,6 +416,11 @@ export default function ProfileScreen() {
             />
           </View>
 
+          <View style={styles.companyFooter}>
+            <Text style={styles.companyName}>Gizmoverse Private Limited</Text>
+            <Text style={styles.companyTagline}>leteski is a product of Gizmoverse Private Limited</Text>
+          </View>
+
           <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
@@ -990,5 +995,20 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  companyFooter: {
+    alignItems: 'center',
+    padding: 20,
+    marginTop: 16,
+  },
+  companyName: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  companyTagline: {
+    fontSize: 12,
+    color: Colors.light.textTertiary,
+    marginTop: 4,
   },
 });

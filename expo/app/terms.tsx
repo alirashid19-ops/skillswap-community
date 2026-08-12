@@ -57,11 +57,11 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: '13. Governing Law',
-    body: 'These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which leteski operates, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be resolved through binding arbitration in accordance with applicable rules.',
+    body: 'These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which Gizmoverse Private Limited operates, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be resolved through binding arbitration in accordance with applicable rules.',
   },
   {
     title: '14. Contact',
-    body: 'For questions about these Terms and Conditions, please contact us through the Contact Us page in the app or at legal@leteski.app.',
+    body: 'For questions about these Terms and Conditions, please contact us through the Contact Us page in the app or at legal@leteski.app. leteski is a product of Gizmoverse Private Limited.',
   },
 ];
 
@@ -105,6 +105,9 @@ export default function TermsScreen() {
             <Text style={styles.footerText}>
               If you have any questions about these Terms, please contact us at{' '}
               <Text style={styles.footerLink}>legal@leteski.app</Text>
+            </Text>
+            <Text style={styles.footerCompany}>
+              leteski is a product of Gizmoverse Private Limited.
             </Text>
           </View>
 
@@ -208,6 +211,12 @@ const styles = StyleSheet.create({
   footerLink: {
     color: Colors.light.primary,
     fontWeight: '600' as const,
+  },
+  footerCompany: {
+    fontSize: 12,
+    color: Colors.light.textTertiary,
+    textAlign: 'center',
+    marginTop: 10,
   },
   bottomSpacer: {
     height: 40,

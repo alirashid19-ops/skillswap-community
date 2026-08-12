@@ -15,7 +15,7 @@ interface PolicySection {
 const SECTIONS: PolicySection[] = [
   {
     title: 'Information We Collect',
-    body: 'We collect information you provide directly, including your name, email address, location, profile information, skills, and any content you post (reviews, messages, skill listings). We also collect verification documents you submit, such as identity documents. Additionally, we automatically collect certain information when you use the app, including device information, usage data, and log data.',
+    body: 'Gizmoverse Private Limited ("we", "us", "our") operates the leteski app ("the Service"). We collect information you provide directly, including your name, email address, location, profile information, skills, and any content you post (reviews, messages, skill listings). We also collect verification documents you submit, such as identity documents. Additionally, we automatically collect certain information when you use the app, including device information, usage data, and log data.',
     icon: <Database size={20} color={Colors.light.primary} />,
   },
   {
@@ -110,6 +110,11 @@ export default function PrivacyScreen() {
               <Text style={styles.sectionBody}>{section.body}</Text>
             </View>
           ))}
+
+          <View style={styles.companyFooter}>
+            <Text style={styles.companyName}>Gizmoverse Private Limited</Text>
+            <Text style={styles.companyTagline}>leteski is a product of Gizmoverse Private Limited</Text>
+          </View>
 
           <View style={styles.bottomSpacer} />
         </View>
@@ -211,6 +216,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: Colors.light.textSecondary,
+  },
+  companyFooter: {
+    alignItems: 'center',
+    padding: 20,
+    marginTop: 16,
+  },
+  companyName: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  companyTagline: {
+    fontSize: 12,
+    color: Colors.light.textTertiary,
+    marginTop: 4,
   },
   bottomSpacer: {
     height: 40,
