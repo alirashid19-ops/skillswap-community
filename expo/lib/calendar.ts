@@ -22,9 +22,9 @@ const escapeICal = (str: string): string => {
 };
 
 const generateICalContent = (title: string, startDate: Date, endDate: Date, location?: string, description?: string): string => {
-  const uid = `${formatICalDate(startDate)}-${Math.random().toString(36).slice(2)}@skillswap.app`;
+  const uid = `${formatICalDate(startDate)}-${Math.random().toString(36).slice(2)}@leteski.app`;
   const lines = [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//LearnSwap//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//leteski//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'BEGIN:VEVENT', `UID:${uid}`, `DTSTAMP:${formatICalDate(new Date())}`,
     `DTSTART:${formatICalDate(startDate)}`, `DTEND:${formatICalDate(endDate)}`, `SUMMARY:${escapeICal(title)}`,
   ];
@@ -55,7 +55,7 @@ export const addSwapToCalendar = async (
     const writable = calendars.filter(c => c.allowsModifications);
     if (writable.length === 0) return { success: false, error: 'No calendar available' };
     const calendarId = (writable.find(c => c.isPrimary) || writable[0]).id;
-    const title = `Skill Swap: ${skillTitle}`;
+    const title = `leteski: ${skillTitle}`;
     const location = swap.locationPreference || 'TBD';
     const eventId = await Calendar.createEventAsync(calendarId, {
       title, startDate: new Date(acceptedTime.startISO), endDate: new Date(acceptedTime.endISO),
@@ -74,7 +74,7 @@ export const exportSwapToICalendar = async (
   swap: SkillSwapRequest, acceptedTime: SwapTimeProposal, skillTitle: string, partnerName: string,
 ): Promise<ICalExportResult> => {
   try {
-    const title = `Skill Swap: ${skillTitle}`;
+    const title = `leteski: ${skillTitle}`;
     const location = swap.locationPreference || 'TBD';
     const icalContent = generateICalContent(title, new Date(acceptedTime.startISO), new Date(acceptedTime.endISO), location, `Skill swap with ${partnerName}. Skill: ${skillTitle}`);
     if (Platform.OS === 'web') {

@@ -1,7 +1,7 @@
 import type { PayoutMethod, Skill, SkillWithUser, User, EarningRule, ClassSessionType, ClassBillingCycle } from '@/types';
 
 // ============================================================
-//  LearnSwap Credit System — Single Source of Truth
+//  leteski Credit System — Single Source of Truth
 //  1 Credit = ₹1 face value (for spending and store credit)
 // ============================================================
 

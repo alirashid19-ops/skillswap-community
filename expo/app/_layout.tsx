@@ -71,7 +71,7 @@ function RootLayoutNav() {
         name="swaps/index"
         options={{
           headerShown: true,
-          title: 'Skill Swaps',
+          title: 'Swaps',
         }}
       />
       <Stack.Screen

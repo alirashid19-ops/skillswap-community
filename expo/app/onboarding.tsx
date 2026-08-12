@@ -43,7 +43,7 @@ const ROLE_OPTIONS: {
 }[] = [
   { key: 'teacher', label: 'I want to Teach', desc: 'Share my skills with others', icon: GraduationCap, color: '#10B981', bg: '#ECFDF5' },
   { key: 'learner', label: 'I want to Learn', desc: 'Find someone to teach me', icon: BookOpen, color: '#6366F1', bg: '#EEF2FF' },
-  { key: 'swap', label: 'Skill Swap', desc: 'Teach & learn together', icon: ArrowLeftRight, color: '#F59E0B', bg: '#FFFBEB' },
+  { key: 'swap', label: 'Swap', desc: 'Teach & learn together', icon: ArrowLeftRight, color: '#F59E0B', bg: '#FFFBEB' },
 ];
 
 export default function OnboardingScreen() {
@@ -195,7 +195,7 @@ export default function OnboardingScreen() {
       <View style={styles.iconContainer}>
         <Sparkles size={64} color="#FF6B9D" strokeWidth={1.5} />
       </View>
-      <Text style={styles.title}>Welcome to LearnSwap!</Text>
+      <Text style={styles.title}>Welcome to leteski!</Text>
       <Text style={styles.subtitle}>
         Let&apos;s set up your profile so we can match you with the perfect skill exchange partners.
       </Text>
@@ -222,7 +222,7 @@ export default function OnboardingScreen() {
       <View style={styles.iconContainer}>
         <ArrowLeftRight size={48} color="#FF6B9D" strokeWidth={1.5} />
       </View>
-      <Text style={styles.title}>How will you use LearnSwap?</Text>
+      <Text style={styles.title}>How will you use leteski?</Text>
       <Text style={styles.subtitle}>
         Choose the option that best fits you. You can do both later!
       </Text>

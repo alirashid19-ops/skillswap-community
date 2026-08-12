@@ -147,7 +147,7 @@ export default function SwapDetailScreen() {
     if (!at) { Alert.alert('Error', 'Could not find time slot'); return; }
     setIsSyncingCalendar(true); setErrorBanner(null);
     try {
-      const result = await addSwapToCalendar(swap, at, counterpartSkill?.title ?? 'Skill Swap', partner?.name ?? 'Partner');
+      const result = await addSwapToCalendar(swap, at, counterpartSkill?.title ?? 'leteski Session', partner?.name ?? 'Partner');
       if (result.success && result.eventId) { setCalendarEventId(swap.id, result.eventId); Alert.alert('Success', 'Event added to your calendar.'); }
       else if (Platform.OS === 'web') { Alert.alert('Web', 'Use "Export iCal" instead.'); }
       else { Alert.alert('Error', result.error || 'Failed'); }
@@ -160,7 +160,7 @@ export default function SwapDetailScreen() {
     if (!at) { Alert.alert('Error', 'Could not find time slot'); return; }
     setIsSyncingCalendar(true); setErrorBanner(null);
     try {
-      const result = await exportSwapToICalendar(swap, at, counterpartSkill?.title ?? 'Skill Swap', partner?.name ?? 'Partner');
+      const result = await exportSwapToICalendar(swap, at, counterpartSkill?.title ?? 'leteski Session', partner?.name ?? 'Partner');
       if (result.success) { Alert.alert('Export Complete', 'Open the file to add to calendar.'); }
       else { Alert.alert('Error', result.error || 'Failed'); }
     } catch { Alert.alert('Error', 'Unexpected error'); } finally { setIsSyncingCalendar(false); }

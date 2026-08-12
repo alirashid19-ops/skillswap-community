@@ -56,7 +56,7 @@ const MODE_OPTIONS: {
   },
   {
     key: 'swap',
-    title: 'Skill Swap',
+    title: 'Swap',
     subtitle: 'Teach & learn together',
     icon: ArrowLeftRight,
     color: '#F59E0B',

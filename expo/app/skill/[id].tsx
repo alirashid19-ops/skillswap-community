@@ -350,7 +350,7 @@ export default function SkillDetailScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.requestButtonGradient}
             >
-              <Text style={styles.requestButtonText}>{activeSwap ? 'Open Swap Thread' : 'Request Skill Swap'}</Text>
+              <Text style={styles.requestButtonText}>{activeSwap ? 'Open Swap Thread' : 'Request Swap'}</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}

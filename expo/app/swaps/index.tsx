@@ -193,7 +193,7 @@ export default function SwapsIndexScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={['#312E81', '#1E1B4B']} style={styles.heroPanel}>
           <View style={styles.heroHeader}>
-            <Text style={styles.heroTitle}>Skill Swap Hub</Text>
+            <Text style={styles.heroTitle}>Swap Hub</Text>
             <Text style={styles.heroSubtitle}>Track negotiations, confirm sessions, and keep progress flowing.</Text>
           </View>
           <View style={styles.metricsRow}>

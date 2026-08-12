@@ -94,7 +94,7 @@ export default function SkillSwapRequestModal({ visible, skill, onClose }: Skill
         });
         onClose();
         router.push(`/swaps/${createdSwap.id}` as never);
-      } catch (e) { console.log('[SkillSwap] Failed', e); setError('Unable to create the request. Try again.'); }
+      } catch (e) { console.log('[leteski] Failed', e); setError('Unable to create the request. Try again.'); }
     };
     void submit();
   }, [canAdvance, introMessage, isSubmitting, mergedLocation, onClose, router, selectedSkillId, selectedTimes, skill.id, skill.user.id, spendCredits, step, submitSwapRequest, totalCost]);

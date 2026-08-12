@@ -33,7 +33,7 @@ export default function ProfileScreen() {
   const verifications = verificationsQuery.data;
 
   const handleShareProfile = async () => {
-    const message = `Check out ${currentUser.name}'s profile on LearnSwap!`;
+    const message = `Check out ${currentUser.name}'s profile on leteski!`;
     const url = `https://rork.app/project/${process.env.EXPO_PUBLIC_PROJECT_ID}/profile/${currentUser.id}`;
     try {
       if (await Sharing.isAvailableAsync()) {

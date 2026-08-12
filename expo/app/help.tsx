@@ -40,13 +40,13 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'How does skill swapping work?',
     answer:
-      'LearnSwap connects you with people who want to learn what you know, and who can teach you what you want to learn. Browse skills on the Explore tab, find a match, and send a swap request. Both participants teach each other their skills in scheduled 1-on-1 sessions. Free swaps cost a small 3-credit platform fee per request; Premium users pay no platform fee.',
+      'leteski connects you with people who want to learn what you know, and who can teach you what you want to learn. Browse skills on the Explore tab, find a match, and send a swap request. Both participants teach each other their skills in scheduled 1-on-1 sessions. Free swaps cost a small 3-credit platform fee per request; Premium users pay no platform fee.',
     icon: <Users size={20} color={Colors.light.primary} />,
   },
   {
     question: 'What are credits and how much are they worth?',
     answer:
-      '1 Credit = ₹1 face value. Credits are the unified currency on LearnSwap — you use them to pay for group classes, premium skill sessions, and to unlock resources. You earn credits by teaching (group classes, paid 1-on-1 sessions), completing swaps as a learner (10 credits per swap), getting 5-star reviews, or through the monthly Premium subscription bonus of 200 credits. You can also buy credits in the Store.',
+      '1 Credit = ₹1 face value. Credits are the unified currency on leteski — you use them to pay for group classes, premium skill sessions, and to unlock resources. You earn credits by teaching (group classes, paid 1-on-1 sessions), completing swaps as a learner (10 credits per swap), getting 5-star reviews, or through the monthly Premium subscription bonus of 200 credits. You can also buy credits in the Store.',
     icon: <Coins size={20} color={Colors.light.accent} />,
   },
   {
@@ -70,7 +70,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'How do teacher earnings work?',
     answer:
-      'Teachers earn 80% of the paid seat credits for every student who attends a group class. For free classes, teachers earn a flat 50 credits per student at completion. The platform takes a 20% commission on paid sessions. When you mark a class complete, your earnings are instantly credited to your LearnSwap credit balance. You also earn 10 bonus credits each time a learner completes a swap with you.',
+      'Teachers earn 80% of the paid seat credits for every student who attends a group class. For free classes, teachers earn a flat 50 credits per student at completion. The platform takes a 20% commission on paid sessions. When you mark a class complete, your earnings are instantly credited to your leteski credit balance. You also earn 10 bonus credits each time a learner completes a swap with you.',
     icon: <Wallet size={20} color={Colors.light.accent} />,
   },
   {
@@ -112,7 +112,7 @@ const FAQ_ITEMS: FaqItem[] = [
   {
     question: 'How do I share my profile with others?',
     answer:
-      'On your Profile tab, tap the Share icon next to your name. This opens your device\'s native share sheet so you can send your LearnSwap profile link via WhatsApp, SMS, email, or any other app. If sharing isn\'t available on your device, the link is copied to your clipboard instead.',
+      'On your Profile tab, tap the Share icon next to your name. This opens your device\'s native share sheet so you can send your leteski profile link via WhatsApp, SMS, email, or any other app. If sharing isn\'t available on your device, the link is copied to your clipboard instead.',
     icon: <Share2 size={20} color={Colors.light.primary} />,
   },
   {

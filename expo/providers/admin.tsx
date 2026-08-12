@@ -7,7 +7,7 @@ import type { User, Review, SkillSwapRequest, UserVerifications, VerificationSta
 const ADMIN_SESSION_KEY = '@skillswap/admin_session';
 
 const ADMIN_CREDENTIALS = {
-  email: 'admin@skillswap.app',
+  email: 'admin@leteski.app',
   password: 'admin123',
 };
 

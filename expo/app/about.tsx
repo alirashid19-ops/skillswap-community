@@ -30,7 +30,7 @@ const VALUES: ValueItem[] = [
     icon: <Globe size={24} color={Colors.light.secondary} />,
     title: 'Accessible to All',
     description:
-      'Learning shouldn\'t be limited by money. Skill Swap makes education accessible through the power of barter — trade your skills, not your wallet.',
+      'Learning shouldn\'t be limited by money. leteski makes education accessible through the power of barter — trade your skills, not your wallet.',
   },
   {
     icon: <Shield size={24} color={Colors.light.primary} />,
@@ -68,7 +68,7 @@ export default function AboutScreen() {
           style={styles.header}
         >
           <Heart size={48} color="#FFFFFF" fill="#FFFFFF" />
-          <Text style={styles.headerTitle}>About Skill Swap</Text>
+          <Text style={styles.headerTitle}>About leteski</Text>
           <Text style={styles.headerSubtitle}>
             Building a world where knowledge knows no boundaries
           </Text>
@@ -79,7 +79,7 @@ export default function AboutScreen() {
             <Zap size={28} color={Colors.light.primary} />
             <Text style={styles.missionTitle}>Our Mission</Text>
             <Text style={styles.missionText}>
-              Skill Swap was born from a simple idea: everyone has something to teach and
+              leteski was born from a simple idea: everyone has something to teach and
               something to learn. We're breaking down the barriers of traditional education by
               creating a community where knowledge flows freely between people — no money
               required, just a willingness to share and grow together.
@@ -100,7 +100,7 @@ export default function AboutScreen() {
             <Text style={styles.sectionTitle}>Our Story</Text>
             <View style={styles.storyCard}>
               <Text style={styles.storyText}>
-                Skill Swap started in 2024 when a group of passionate learners realized that
+                leteski started in 2024 when a group of passionate learners realized that
                 the best education often happens person-to-person. Traditional learning
                 platforms charge high fees, while so many talented people are eager to share
                 their skills in exchange for learning something new.
@@ -180,7 +180,7 @@ export default function AboutScreen() {
           <View style={styles.closingCard}>
             <Heart size={24} color={Colors.light.error} fill={Colors.light.error} />
             <Text style={styles.closingText}>
-              Thank you for being part of the Skill Swap community. Together, we're making
+              Thank you for being part of the leteski community. Together, we're making
               learning accessible, personal, and free.
             </Text>
           </View>

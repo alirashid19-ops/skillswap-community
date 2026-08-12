@@ -84,7 +84,7 @@ export default function ContactScreen() {
               <View style={styles.contactInfoCard}>
                 <Mail size={22} color={Colors.light.primary} />
                 <Text style={styles.contactInfoLabel}>Email</Text>
-                <Text style={styles.contactInfoValue}>support@skillswap.app</Text>
+                <Text style={styles.contactInfoValue}>support@leteski.app</Text>
               </View>
               <View style={styles.contactInfoCard}>
                 <Clock size={22} color={Colors.light.secondary} />
@@ -166,7 +166,7 @@ export default function ContactScreen() {
             <View style={styles.locationCard}>
               <MapPin size={20} color={Colors.light.textSecondary} />
               <Text style={styles.locationText}>
-                Skill Swap is a global community. Wherever you are, we're here to help.
+                leteski is a global community. Wherever you are, we're here to help.
               </Text>
             </View>
 

@@ -9,7 +9,7 @@ const LAST_UPDATED = 'June 24, 2026';
 const SECTIONS: { title: string; body: string }[] = [
   {
     title: '1. Acceptance of Terms',
-    body: 'By creating an account or using Skill Swap ("the Service"), you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use the Service. We reserve the right to update these terms at any time, and continued use of the Service constitutes acceptance of any changes.',
+    body: 'By creating an account or using leteski ("the Service"), you agree to be bound by these Terms and Conditions. If you do not agree with any part of these terms, you must not use the Service. We reserve the right to update these terms at any time, and continued use of the Service constitutes acceptance of any changes.',
   },
   {
     title: '2. Eligibility',
@@ -24,8 +24,8 @@ const SECTIONS: { title: string; body: string }[] = [
     body: 'You agree to use the Service in a lawful manner and in accordance with these Terms. You will not: (a) harass, abuse, or harm other users; (b) post false, misleading, or deceptive content; (c) impersonate any person or entity; (d) use the Service for any illegal purpose; (e) attempt to gain unauthorized access to any part of the Service; (f) interfere with or disrupt the Service; (g) scrape, data-mine, or use automated means to access the Service; (h) violate any applicable laws or regulations.',
   },
   {
-    title: '5. Skill Swap Sessions',
-    body: 'Skill Swap facilitates connections between users for the purpose of skill exchange. We do not guarantee the quality, safety, or legality of any skill exchange session. Users participate in swaps at their own risk. We recommend using the in-app communication and video call features for safety. Users should exercise caution when sharing personal information or meeting in person.',
+    title: '5. leteski Sessions',
+    body: 'leteski facilitates connections between users for the purpose of skill exchange. We do not guarantee the quality, safety, or legality of any skill exchange session. Users participate in swaps at their own risk. We recommend using the in-app communication and video call features for safety. Users should exercise caution when sharing personal information or meeting in person.',
   },
   {
     title: '6. Credits and Payments',
@@ -41,7 +41,7 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: '9. Intellectual Property',
-    body: 'The Service and its original content, features, and functionality are owned by Skill Swap and are protected by international copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, or create derivative works based on the Service without our prior written consent.',
+    body: 'The Service and its original content, features, and functionality are owned by leteski and are protected by international copyright, trademark, and other intellectual property laws. You may not copy, modify, distribute, or create derivative works based on the Service without our prior written consent.',
   },
   {
     title: '10. Termination',
@@ -57,11 +57,11 @@ const SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: '13. Governing Law',
-    body: 'These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which Skill Swap operates, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be resolved through binding arbitration in accordance with applicable rules.',
+    body: 'These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which leteski operates, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be resolved through binding arbitration in accordance with applicable rules.',
   },
   {
     title: '14. Contact',
-    body: 'For questions about these Terms and Conditions, please contact us through the Contact Us page in the app or at legal@skillswap.app.',
+    body: 'For questions about these Terms and Conditions, please contact us through the Contact Us page in the app or at legal@leteski.app.',
   },
 ];
 
@@ -89,7 +89,7 @@ export default function TermsScreen() {
           <View style={styles.introCard}>
             <FileText size={24} color={Colors.light.primary} />
             <Text style={styles.introText}>
-              Please read these Terms and Conditions carefully before using the Skill Swap
+              Please read these Terms and Conditions carefully before using the leteski
               application. By using our service, you agree to be bound by these terms.
             </Text>
           </View>
@@ -104,7 +104,7 @@ export default function TermsScreen() {
           <View style={styles.footer}>
             <Text style={styles.footerText}>
               If you have any questions about these Terms, please contact us at{' '}
-              <Text style={styles.footerLink}>legal@skillswap.app</Text>
+              <Text style={styles.footerLink}>legal@leteski.app</Text>
             </Text>
           </View>
 
