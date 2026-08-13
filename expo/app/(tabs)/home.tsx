@@ -8,7 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { RefreshCcw, Star, TrendingUp, Users, Zap, GraduationCap, BookOpen, ArrowLeftRight, Sparkles, IndianRupee } from 'lucide-react-native';
+import { RefreshCcw, Star, TrendingUp, Users, Zap, GraduationCap, BookOpen, ArrowLeftRight, Sparkles, IndianRupee, Bot } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '../../constants/colors';
 import { getSkillsWithUsers, categories } from '../../mocks/data';
@@ -404,6 +404,22 @@ export default function HomeScreen() {
           <View style={styles.bottomSpacer} />
         </View>
       </ScrollView>
+
+      <TouchableOpacity
+        style={styles.aiFab}
+        onPress={() => router.push('/assistant' as any)}
+        activeOpacity={0.85}
+      >
+        <LinearGradient
+          colors={['#6366F1', '#818CF8']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.aiFabGradient}
+        >
+          <Bot size={22} color="#FFF" />
+          <Text style={styles.aiFabText}>AI</Text>
+        </LinearGradient>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -945,6 +961,30 @@ const styles = StyleSheet.create({
     color: Colors.light.text,
   },
   bottomSpacer: {
-    height: 40,
+    height: 80,
+  },
+  aiFab: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    borderRadius: 28,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  aiFabGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 28,
+  },
+  aiFabText: {
+    fontSize: 14,
+    fontWeight: '800' as const,
+    color: '#FFF',
   },
 });

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import { Alert, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { Alert, StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Calendar, Clock, Users, Coins, Image as ImageIcon, Check, Sparkles, Layers } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,7 @@ import Colors from '@/constants/colors';
 import { categories } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
 import { useCurrentUser } from '@/providers/current-user';
+import { generateClassDescription } from '@/lib/ai';
 import type { SkillCategory, SkillLevel, ClassSessionType, ClassBillingCycle, Skill } from '@/types';
 
 const LEVELS: SkillLevel[] = ['Beginner', 'Intermediate', 'Advanced', 'Expert'];
@@ -54,6 +55,25 @@ export default function CreateClassScreen() {
   });
   const [billingCycle, setBillingCycle] = useState<ClassBillingCycle>(() => selectedSkill?.pricingModel === 'monthly' ? 'monthly' : 'one_time');
   const [submitting, setSubmitting] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
+
+  const handleGenerateDescription = async () => {
+    if (!title.trim()) {
+      Alert.alert('Title needed', 'Please enter a class title first.');
+      return;
+    }
+    setIsGeneratingDesc(true);
+    try {
+      const sessionLabel = SESSION_TYPES.find(s => s.key === sessionType)?.label ?? sessionType;
+      const desc = await generateClassDescription(title.trim(), category, level, sessionLabel);
+      setDescription(desc);
+    } catch (e) {
+      console.error('[CreateClass] AI gen error:', e);
+      Alert.alert('AI Error', 'Could not generate description. Please try again or write your own.');
+    } finally {
+      setIsGeneratingDesc(false);
+    }
+  };
 
   const isWeekly = sessionType === 'weekly';
   const isRecurring = sessionType !== 'single';
@@ -164,7 +184,24 @@ export default function CreateClassScreen() {
         <Text style={s.label}>Class Title</Text>
         <TextInput style={s.input} value={title} onChangeText={setTitle} placeholder="e.g. Intro to Watercolor Painting" placeholderTextColor={Colors.light.textTertiary} />
 
-        <Text style={s.label}>Description</Text>
+        <View style={s.labelRow}>
+          <Text style={s.label}>Description</Text>
+          <TouchableOpacity
+            style={s.aiGenButton}
+            onPress={handleGenerateDescription}
+            disabled={isGeneratingDesc || !title.trim()}
+            activeOpacity={0.7}
+          >
+            {isGeneratingDesc ? (
+              <ActivityIndicator size={12} color="#6366F1" />
+            ) : (
+              <Sparkles size={12} color="#6366F1" />
+            )}
+            <Text style={s.aiGenText}>
+              {isGeneratingDesc ? 'Generating...' : 'Generate with AI'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <TextInput style={[s.input, s.textArea]} value={description} onChangeText={setDescription} placeholder="What will students learn? What should they bring?" placeholderTextColor={Colors.light.textTertiary} multiline numberOfLines={4} textAlignVertical="top" />
 
         <Text style={s.label}>Category</Text>
@@ -313,6 +350,9 @@ const s = StyleSheet.create({
   headerSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
   form: { padding: 20 },
   label: { fontSize: 14, fontWeight: '700' as const, color: Colors.light.text, marginBottom: 8, marginTop: 16 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, marginTop: 16 },
+  aiGenButton: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EEF2FF', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#C7D2FE' },
+  aiGenText: { fontSize: 11, fontWeight: '700' as const, color: '#6366F1' },
   input: { backgroundColor: Colors.light.backgroundTertiary, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: Colors.light.text, borderWidth: 1, borderColor: Colors.light.border },
   textArea: { minHeight: 100, paddingTop: 14 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.light.backgroundTertiary, borderRadius: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: Colors.light.border },

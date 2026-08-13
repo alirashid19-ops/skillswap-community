@@ -191,6 +191,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="assistant"
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
         name="help"
         options={{
           headerShown: true,

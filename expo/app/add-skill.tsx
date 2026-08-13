@@ -9,6 +9,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useState } from 'react';
@@ -27,6 +28,7 @@ import Colors from '@/constants/colors';
 import { useCurrentUser } from '@/providers/current-user';
 import { SkillCategory, SkillLevel, Skill, PricingModel } from '@/types';
 import { formatPrice } from '@/constants/locale';
+import { generateSkillDescription } from '@/lib/ai';
 
 type AddMode = 'teach' | 'learn' | 'swap';
 
@@ -119,6 +121,24 @@ export default function AddSkillScreen() {
   const [showLearnCategory, setShowLearnCategory] = useState<boolean>(false);
 
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState<boolean>(false);
+
+  const handleGenerateDescription = async () => {
+    if (!teachTitle.trim() || !teachCategory || !teachLevel) {
+      Alert.alert('Missing Info', 'Please fill in the skill title, category, and level first.');
+      return;
+    }
+    setIsGeneratingDesc(true);
+    try {
+      const desc = await generateSkillDescription(teachTitle.trim(), teachCategory, teachLevel);
+      setTeachDescription(desc);
+    } catch (e) {
+      console.error('[AddSkill] AI gen error:', e);
+      Alert.alert('AI Error', 'Could not generate description. Please try again or write your own.');
+    } finally {
+      setIsGeneratingDesc(false);
+    }
+  };
 
   const showTeachFields = mode === 'teach' || mode === 'swap';
   const showLearnFields = mode === 'learn' || mode === 'swap';
@@ -386,7 +406,24 @@ export default function AddSkillScreen() {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.label}>Description (Optional)</Text>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Description (Optional)</Text>
+                  <TouchableOpacity
+                    style={styles.aiGenButton}
+                    onPress={handleGenerateDescription}
+                    disabled={isGeneratingDesc || !teachTitle.trim() || !teachCategory || !teachLevel}
+                    activeOpacity={0.7}
+                  >
+                    {isGeneratingDesc ? (
+                      <ActivityIndicator size={12} color="#6366F1" />
+                    ) : (
+                      <Sparkles size={12} color="#6366F1" />
+                    )}
+                    <Text style={styles.aiGenText}>
+                      {isGeneratingDesc ? 'Generating...' : 'Generate with AI'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
                 <TextInput
                   style={[styles.input, styles.textArea]}
                   value={teachDescription}
@@ -722,6 +759,28 @@ const styles = StyleSheet.create({
     fontWeight: '700' as const,
     color: Colors.light.text,
     marginBottom: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  aiGenButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  aiGenText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#6366F1',
   },
   input: {
     backgroundColor: Colors.light.backgroundTertiary,
