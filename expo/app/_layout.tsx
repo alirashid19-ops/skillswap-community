@@ -9,6 +9,7 @@ import { trpc, trpcClient } from "../lib/trpc";
 import { AuthProvider } from "../providers/auth";
 import { CurrentUserProvider } from "../providers/current-user";
 import { SkillSwapsProvider } from "../providers/skill-swaps";
+import { SafetyProvider } from "../providers/safety";
 import { ClassesProvider } from "../providers/classes";
 import { NotificationsProvider } from "../providers/notifications";
 import { ResourcesProvider } from "../providers/resources";
@@ -52,6 +53,15 @@ function RootLayoutNav() {
         options={{
           headerShown: true,
           title: 'My Classes',
+        }}
+      />
+      <Stack.Screen
+        name="admin/reports"
+        options={{
+          headerShown: true,
+          title: 'User Reports',
+          headerStyle: { backgroundColor: '#0F172A' },
+          headerTintColor: '#F8FAFC',
         }}
       />
       <Stack.Screen
@@ -232,6 +242,7 @@ export default function RootLayout() {
             <CurrentUserProvider>
               <EarningsProvider>
                 <SkillSwapsProvider>
+                  <SafetyProvider>
                   <NotificationsProvider>
                     <ClassesProvider>
                       <ResourcesProvider>
@@ -245,6 +256,7 @@ export default function RootLayout() {
                       </ResourcesProvider>
                     </ClassesProvider>
                   </NotificationsProvider>
+                  </SafetyProvider>
                 </SkillSwapsProvider>
               </EarningsProvider>
             </CurrentUserProvider>

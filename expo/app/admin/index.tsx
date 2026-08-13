@@ -22,8 +22,10 @@ import {
   Activity,
   BarChart3,
   Wallet,
+  ShieldX,
 } from 'lucide-react-native';
 import { useAdmin } from '@/providers/admin';
+import { useSafety } from '@/providers/safety';
 import { useEarnings } from '@/providers/earnings';
 import Colors from '@/constants/colors';
 
@@ -31,6 +33,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { stats, isAdminAuthenticated, adminLogout } = useAdmin();
+  const { pendingReportsCount } = useSafety();
   const { pendingPayoutsCount, totalPayoutsAmount } = useEarnings();
 
   useEffect(() => {
@@ -95,6 +98,15 @@ export default function AdminDashboard() {
       badge: pendingPayoutsCount > 0 ? pendingPayoutsCount : undefined,
     },
     {
+      title: 'User Reports',
+      subtitle: `${pendingReportsCount} pending report${pendingReportsCount !== 1 ? 's' : ''}`,
+      icon: ShieldX,
+      color: '#EF4444',
+      bg: '#FEF2F2',
+      route: '/admin/reports',
+      badge: pendingReportsCount > 0 ? pendingReportsCount : undefined,
+    },
+    {
       title: 'Class Management',
       subtitle: 'Monitor and cancel group classes',
       icon: Users,
@@ -156,7 +168,7 @@ export default function AdminDashboard() {
             <View style={styles.alertContent}>
               <Text style={styles.alertTitle}>Pending Actions</Text>
               <Text style={styles.alertDesc}>
-                {stats.pendingReviews} reviews and {stats.pendingVerifications} verifications need attention
+                {stats.pendingReviews} reviews, {stats.pendingVerifications} verifications, and {pendingReportsCount} user reports need attention
               </Text>
             </View>
           </View>
