@@ -2,8 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { trpc } from '../lib/trpc';
+import {
+  localSignIn as localSignInFn,
+  localSignUp as localSignUpFn,
+  localVerifyOtp as localOtpFn,
+  localOauthSignIn as localOauthFn,
+  localGetCurrentUser,
+} from '../lib/local-auth';
 
 const TOKEN_KEY = '@skillswap/auth_token';
+const USERS_KEY = '@skillswap/local_users';
 
 export type PremiumTier = 'free' | 'basic' | 'premium' | 'elite';
 
@@ -63,6 +71,11 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
       const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
       if (storedToken) {
         setToken(storedToken);
+        // Try to restore user from local auth fallback
+        const localUser = await localGetCurrentUser(storedToken);
+        if (localUser) {
+          setUser(localUser);
+        }
       }
     } catch (error) {
       console.error('[Auth] Failed to refresh auth:', error);
@@ -83,7 +96,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signIn = useCallback(async (email: string, password: string) => {
     console.log('[Auth] Signing in with email/password');
     try {
-      const result = await signInMutation.mutateAsync({ email, password });
+      let result;
+      try {
+        result = await signInMutation.mutateAsync({ email, password });
+      } catch (tRpcError) {
+        console.warn('[Auth] tRPC signIn failed, using local fallback:', tRpcError);
+        result = await localSignInFn(email, password);
+      }
       await saveToken(result.token);
       setUser({
         ...result.user,
@@ -100,7 +119,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signUp = useCallback(async (email: string, password: string, name: string) => {
     console.log('[Auth] Signing up with email/password');
     try {
-      const result = await signUpMutation.mutateAsync({ email, password, name });
+      let result;
+      try {
+        result = await signUpMutation.mutateAsync({ email, password, name });
+      } catch (tRpcError) {
+        console.warn('[Auth] tRPC signUp failed, using local fallback:', tRpcError);
+        result = await localSignUpFn(email, password, name);
+      }
       await saveToken(result.token);
       setUser({
         ...result.user,
@@ -117,7 +142,13 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   const signInWithOtp = useCallback(async (identifier: string, code: string) => {
     console.log('[Auth] Signing in with OTP');
     try {
-      const result = await verifyOtpMutation.mutateAsync({ identifier, code });
+      let result;
+      try {
+        result = await verifyOtpMutation.mutateAsync({ identifier, code });
+      } catch (tRpcError) {
+        console.warn('[Auth] tRPC verifyOtp failed, using local fallback:', tRpcError);
+        result = await localOtpFn(identifier, code);
+      }
       await saveToken(result.token);
       setUser({
         ...result.user,
@@ -142,10 +173,16 @@ export const [AuthProvider, useAuth] = createContextHook<AuthContextValue>(() =>
   ) => {
     console.log('[Auth] Signing in with OAuth:', provider);
     try {
-      const result = await oauthSignInMutation.mutateAsync({
-        provider,
-        ...data,
-      });
+      let result;
+      try {
+        result = await oauthSignInMutation.mutateAsync({
+          provider,
+          ...data,
+        });
+      } catch (tRpcError) {
+        console.warn('[Auth] tRPC oauthSignIn failed, using local fallback:', tRpcError);
+        result = await localOauthFn(provider, data);
+      }
       await saveToken(result.token);
       setUser({
         ...result.user,

@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, Phone, Apple, Chrome, Sparkles, Lock, User, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { trpc } from '@/lib/trpc';
+import { localSendOtp, localRequestPasswordReset } from '@/lib/local-auth';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -43,7 +44,13 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const result = await sendOtpMutation.mutateAsync({ identifier });
+      let result;
+      try {
+        result = await sendOtpMutation.mutateAsync({ identifier });
+      } catch (tRpcError) {
+        console.warn('[Login] tRPC sendOtp failed, using local fallback');
+        result = await localSendOtp(identifier);
+      }
       setStep('verify');
       if (result.devCode) {
         Alert.alert('Code sent', `Development code: ${result.devCode}`);
@@ -116,7 +123,13 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const result = await requestResetMutation.mutateAsync({ email: identifier });
+      let result;
+      try {
+        result = await requestResetMutation.mutateAsync({ email: identifier });
+      } catch (tRpcError) {
+        console.warn('[Login] tRPC requestReset failed, using local fallback');
+        result = await localRequestPasswordReset(identifier);
+      }
       if (result.devToken) {
         Alert.alert('Reset link sent', `Development token: ${result.devToken}\n\nIn production, this would be sent via email.`);
       } else {
