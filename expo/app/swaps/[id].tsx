@@ -343,10 +343,10 @@ export default function SwapDetailScreen() {
               </TouchableOpacity>
             </View>
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity style={[styles.callBtn, { backgroundColor: '#8B5CF6' }]} onPress={() => router.push(`/call/${swap.id}` as any)} activeOpacity={0.9} testID="start-video-call">
+              <TouchableOpacity style={[styles.callBtn, { backgroundColor: '#8B5CF6' }]} onPress={() => router.push(`/call/${swap.id}?mode=video` as any)} activeOpacity={0.9} testID="start-video-call">
                 <Video size={20} color="#FFFFFF" /><Text style={styles.callBtnText}>Video Call</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.callBtn, { backgroundColor: '#10B981' }]} onPress={() => router.push(`/call/${swap.id}` as any)} activeOpacity={0.9} testID="start-voice-call">
+              <TouchableOpacity style={[styles.callBtn, { backgroundColor: '#10B981' }]} onPress={() => router.push(`/call/${swap.id}?mode=voice` as any)} activeOpacity={0.9} testID="start-voice-call">
                 <Phone size={20} color="#FFFFFF" /><Text style={styles.callBtnText}>Voice Call</Text>
               </TouchableOpacity>
             </View>

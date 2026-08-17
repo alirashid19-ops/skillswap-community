@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, Clock, Users, Coins, MapPin, Star, Sparkles, CheckCircle2, XCircle, ArrowLeft, Repeat, CreditCard } from 'lucide-react-native';
+import { Calendar, Clock, Users as UsersIcon, Coins, MapPin, Star, Sparkles, CheckCircle2, XCircle, ArrowLeft, Repeat, CreditCard, Video } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
@@ -229,7 +229,7 @@ export default function ClassDetailScreen() {
 
         <View style={s.seatsCard}>
           <View style={s.seatsHeader}>
-            <Users size={18} color={Colors.light.primary} />
+            <UsersIcon size={18} color={Colors.light.primary} />
             <Text style={s.seatsTitle}>{cls.enrolledCount} of {cls.maxCapacity} enrolled</Text>
           </View>
           <View style={s.seatsBar}>
@@ -273,6 +273,10 @@ export default function ClassDetailScreen() {
             <View style={s.teacherActions}>
               {classOpen && (
                 <>
+                  <TouchableOpacity style={s.classCallBtn} onPress={() => router.push(`/call/${cls.id}?mode=video` as any)} activeOpacity={0.8}>
+                    <Video size={20} color="#FFFFFF" />
+                    <Text style={s.classCallBtnText}>Start Class Call</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity style={s.completeBtn} onPress={handleCompleteClass} activeOpacity={0.8}>
                     <CheckCircle2 size={20} color="#FFFFFF" />
                     <Text style={s.completeBtnText}>Mark Complete</Text>
@@ -289,10 +293,16 @@ export default function ClassDetailScreen() {
           ) : (
             <View>
               {enrolled && classOpen ? (
-                <TouchableOpacity style={s.enrolledBtn} onPress={handleCancelEnrollment} activeOpacity={0.8}>
-                  <CheckCircle2 size={20} color="#FFFFFF" />
-                  <Text style={s.enrolledBtnText}>Enrolled — Tap to cancel</Text>
-                </TouchableOpacity>
+                <View style={s.enrolledActions}>
+                  <TouchableOpacity style={s.classCallBtn} onPress={() => router.push(`/call/${cls.id}?mode=video` as any)} activeOpacity={0.8}>
+                    <Video size={20} color="#FFFFFF" />
+                    <Text style={s.classCallBtnText}>Join Class Call</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={s.enrolledBtn} onPress={handleCancelEnrollment} activeOpacity={0.8}>
+                    <CheckCircle2 size={20} color="#FFFFFF" />
+                    <Text style={s.enrolledBtnText}>Enrolled — Tap to cancel</Text>
+                  </TouchableOpacity>
+                </View>
               ) : !enrolled && classOpen && !isFull ? (
                 <TouchableOpacity style={s.enrollBtn} onPress={handleEnroll} activeOpacity={0.8}>
                   <Text style={s.enrollBtnText}>
@@ -385,6 +395,9 @@ const s = StyleSheet.create({
   endedBtnText: { fontSize: 15, fontWeight: '600' as const, color: Colors.light.textTertiary },
   balanceNote: { textAlign: 'center', fontSize: 13, color: Colors.light.textTertiary, marginTop: 10 },
   teacherActions: { gap: 10 },
+  enrolledActions: { gap: 10 },
+  classCallBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#8B5CF6', borderRadius: 16, paddingVertical: 16 },
+  classCallBtnText: { fontSize: 16, fontWeight: '700' as const, color: '#FFFFFF' },
   completeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#10B981', borderRadius: 16, paddingVertical: 16 },
   completeBtnText: { fontSize: 16, fontWeight: '700' as const, color: '#FFFFFF' },
   cancelClassBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 16, paddingVertical: 14, borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' },

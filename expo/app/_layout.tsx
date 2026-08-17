@@ -99,6 +99,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="call/[classId]"
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+        }}
+      />
+      <Stack.Screen
         name="edit-profile"
         options={{
           headerShown: true,

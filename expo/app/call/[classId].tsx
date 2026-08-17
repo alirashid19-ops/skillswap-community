@@ -5,47 +5,52 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import CallScreen from '../../components/CallScreen';
 import { useCurrentUser } from '../../providers/current-user';
-import { useSkillSwaps } from '../../providers/skill-swaps';
+import { useClasses } from '../../providers/classes';
+import { mockUsers } from '../../mocks/data';
 import {
-  buildLocalParticipant, buildRemoteParticipant,
+  buildLocalParticipant, buildRemoteParticipant, buildMockClassParticipants,
   type CallParticipant,
 } from '../../lib/call-engine';
 
-export default function SwapCallScreen() {
-  const { swapId, mode } = useLocalSearchParams<{ swapId: string; mode?: string }>();
+export default function ClassCallScreen() {
+  const { classId, mode } = useLocalSearchParams<{ classId: string; mode?: string }>();
   const router = useRouter();
-  const { currentUser, allUsers } = useCurrentUser();
-  const { getSwapById } = useSkillSwaps();
+  const { currentUser } = useCurrentUser();
+  const { getClassById } = useClasses();
 
-  const swap = useMemo(() => {
-    if (!swapId) return undefined;
-    return getSwapById(swapId);
-  }, [getSwapById, swapId]);
-
-  const partner = useMemo(() => {
-    if (!swap) return undefined;
-    const partnerId = swap.requesterId === currentUser.id ? swap.recipientId : swap.requesterId;
-    return allUsers.find((u) => u.id === partnerId);
-  }, [allUsers, currentUser.id, swap]);
+  const cls = useMemo(() => getClassById(classId), [getClassById, classId]);
 
   const callMode = mode === 'voice' ? 'voice' : 'video';
 
   const participants: CallParticipant[] = useMemo(() => {
-    if (!partner) return [];
-    return [
-      buildLocalParticipant(currentUser, 'guest'),
-      buildRemoteParticipant(
-        { id: partner.id, name: partner.name, avatarUrl: partner.avatarUrl },
-        'host',
-      ),
-    ];
-  }, [currentUser, partner]);
+    if (!cls) return [];
+    const teacher = mockUsers.find((u) => u.id === cls.teacherId);
+    const localRole = cls.teacherId === currentUser.id ? 'teacher' : 'student';
+    const local = buildLocalParticipant(currentUser, localRole);
+
+    const others: CallParticipant[] = [];
+    if (teacher && teacher.id !== currentUser.id) {
+      others.push(buildRemoteParticipant(
+        { id: teacher.id, name: teacher.name, avatarUrl: teacher.avatarUrl },
+        'teacher',
+      ));
+    }
+
+    const enrolledStudents = cls.enrollments
+      .filter(e => e.studentId !== currentUser.id && e.status === 'enrolled')
+      .map(e => mockUsers.find(u => u.id === e.studentId))
+      .filter((u): u is NonNullable<typeof u> => u !== undefined);
+
+    others.push(...buildMockClassParticipants(enrolledStudents.length));
+
+    return [local, ...others];
+  }, [cls, currentUser]);
 
   const handleEndCall = () => {
     router.back();
   };
 
-  if (!swap || !partner) {
+  if (!cls) {
     return (
       <View style={styles.errorContainer}>
         <LinearGradient colors={['#0B1120', '#1E293B']} style={styles.errorGradient}>
@@ -54,20 +59,22 @@ export default function SwapCallScreen() {
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
           <View style={styles.errorContent}>
-            <Text style={styles.errorTitle}>Call not available</Text>
-            <Text style={styles.errorMessage}>Unable to start the call. Please try again.</Text>
+            <Text style={styles.errorTitle}>Class call not available</Text>
+            <Text style={styles.errorMessage}>Unable to start the class call. Please try again.</Text>
           </View>
         </LinearGradient>
       </View>
     );
   }
 
+  const isTeacher = cls.teacherId === currentUser.id;
+
   return (
     <CallScreen
       participants={participants}
-      roomTitle={`Skill swap with ${partner.name}`}
+      roomTitle={cls.title}
       mode={callMode}
-      isGroupCall={false}
+      isGroupCall
       onEndCall={handleEndCall}
     />
   );
