@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockUsers } from '../mocks/data';
@@ -240,7 +240,7 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(()
   }, []);
 
   // Restore admin session on mount
-  useMemo(() => {
+  useEffect(() => {
     (async () => {
       try {
         const session = await AsyncStorage.getItem(ADMIN_SESSION_KEY);

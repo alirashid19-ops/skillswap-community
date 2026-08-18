@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { mockUsers } from '../mocks/data';
@@ -81,7 +81,7 @@ export const [SafetyProvider, useSafety] = createContextHook<SafetyContextValue>
   const [blockedUsers, setBlockedUsers] = useState<BlockedUser[]>([]);
 
   // Restore blocked users from AsyncStorage
-  useMemo(() => {
+  useEffect(() => {
     (async () => {
       try {
         const stored = await AsyncStorage.getItem(BLOCKS_KEY);
