@@ -205,6 +205,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="certificate/[id]"
+        options={{
+          headerShown: false,
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
         name="help"
         options={{
           headerShown: true,

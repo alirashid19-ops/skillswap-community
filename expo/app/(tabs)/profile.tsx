@@ -6,8 +6,9 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2 } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2, Download, ScrollText } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +21,10 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import ReviewsSection from '@/components/ReviewsSection';
 import { TrustScoreBadge } from '@/components/TrustScoreBadge';
+import { useSkillSwaps } from '@/providers/skill-swaps';
+import { useClasses } from '@/providers/classes';
+import { getSkillsWithUsers } from '@/mocks/data';
+import { buildSwapCertificates, buildClassCertificates, getCertificateLabel, formatDate, type CertificateData } from '@/lib/certificate';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -31,6 +36,15 @@ export default function ProfileScreen() {
   const earningsSummary = getSummary(currentUser.id);
   const verificationsQuery = trpc.verification.getVerifications.useQuery();
   const verifications = verificationsQuery.data;
+  const { swaps } = useSkillSwaps();
+  const { classes, enrollments } = useClasses();
+
+  const certificates = useMemo(() => {
+    const skills = getSkillsWithUsers().map(s => s as any);
+    const swapCerts = buildSwapCertificates(swaps, currentUser, mockUsers, skills);
+    const classCerts = buildClassCertificates(classes, enrollments as any, currentUser, mockUsers);
+    return [...swapCerts, ...classCerts];
+  }, [swaps, currentUser, classes, enrollments]);
 
   const handleShareProfile = async () => {
     const message = `Check out ${currentUser.name}'s profile on leteski!`;
@@ -414,6 +428,60 @@ export default function ProfileScreen() {
               revieweeId={currentUser.id}
               headline="Reviews You've Received"
             />
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Certificates</Text>
+              {certificates.length > 0 && (
+                <View style={styles.certCountBadge}>
+                  <Text style={styles.certCountText}>{certificates.length}</Text>
+                </View>
+              )}
+            </View>
+            {certificates.length === 0 ? (
+              <View style={styles.certEmpty}>
+                <ScrollText size={36} color={Colors.light.textTertiary} />
+                <Text style={styles.certEmptyTitle}>No certificates yet</Text>
+                <Text style={styles.certEmptySub}>Complete swaps and classes to earn certificates</Text>
+              </View>
+            ) : (
+              <View style={styles.certList}>
+                {certificates.map((cert: CertificateData) => {
+                  const label = getCertificateLabel(cert.type);
+                  return (
+                    <TouchableOpacity
+                      key={cert.id}
+                      style={styles.certCard}
+                      onPress={() => router.push(`/certificate/${cert.id}` as any)}
+                      activeOpacity={0.7}
+                    >
+                      <LinearGradient
+                        colors={['#6366F1', '#4F46E5']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.certCardIcon}
+                      >
+                        <Award size={22} color="#FFFFFF" />
+                      </LinearGradient>
+                      <View style={styles.certCardInfo}>
+                        <Text style={styles.certCardTitle} numberOfLines={1}>{cert.skillTitle}</Text>
+                        <Text style={styles.certCardSub} numberOfLines={1}>{label.subtitle}</Text>
+                        <Text style={styles.certCardDate}>{formatDate(cert.completedAt)}</Text>
+                      </View>
+                      <View style={styles.certCardActions}>
+                        <TouchableOpacity
+                          style={styles.certDownloadBtn}
+                          onPress={() => router.push(`/certificate/${cert.id}` as any)}
+                        >
+                          <Download size={16} color={Colors.light.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
           </View>
 
           <View style={styles.companyFooter}>
@@ -995,6 +1063,92 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  certCountBadge: {
+    backgroundColor: Colors.light.primary + '20',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  certCountText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: Colors.light.primary,
+  },
+  certEmpty: {
+    alignItems: 'center',
+    padding: 32,
+    gap: 10,
+    backgroundColor: Colors.light.card,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.light.borderLight,
+  },
+  certEmptyTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  certEmptySub: {
+    fontSize: 13,
+    color: Colors.light.textSecondary,
+    textAlign: 'center' as const,
+  },
+  certList: {
+    gap: 12,
+  },
+  certCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.light.card,
+    padding: 14,
+    borderRadius: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: Colors.light.borderLight,
+    shadowColor: Colors.light.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  certCardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  certCardInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  certCardTitle: {
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  certCardSub: {
+    fontSize: 12,
+    color: Colors.light.primary,
+    fontWeight: '600' as const,
+  },
+  certCardDate: {
+    fontSize: 11,
+    color: Colors.light.textTertiary,
+  },
+  certCardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  certDownloadBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: Colors.light.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   companyFooter: {
     alignItems: 'center',

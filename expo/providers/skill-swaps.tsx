@@ -190,7 +190,81 @@ export const [SkillSwapsProvider, useSkillSwaps] = createContextHook<SkillSwapsC
       ],
     };
 
-    return [swapA, swapB];
+    const swapC: SkillSwapRequest = {
+      id: 'swap-completed-1',
+      requesterId: currentUser.id,
+      requesterSkillId: currentUser.skillsOffered[0]?.id ?? '',
+      recipientId: '3',
+      recipientSkillId: lookupSkillId('3'),
+      status: 'completed',
+      locationPreference: 'Virtual Session',
+      createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+      proposedTimes: [
+        {
+          id: 'slot-completed-1',
+          proposedById: currentUser.id,
+          startISO: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+          endISO: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString(),
+          status: 'accepted',
+        },
+      ],
+      acceptedTimeId: 'slot-completed-1',
+      negotiationNotes: [
+        {
+          id: 'msg-completed-1',
+          authorId: currentUser.id,
+          body: 'Looking forward to learning Hindi!',
+          createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'msg-completed-2',
+          authorId: '3',
+          body: 'Session complete! Great progress.',
+          createdAt: new Date(now.getTime() - 8 * 24 * 60 * 60 * 1000).toISOString(),
+          isSystem: true,
+        },
+      ],
+    };
+
+    const swapD: SkillSwapRequest = {
+      id: 'swap-completed-2',
+      requesterId: '5',
+      requesterSkillId: lookupSkillId('5'),
+      recipientId: currentUser.id,
+      recipientSkillId: currentUser.skillsOffered[1]?.id ?? currentUser.skillsOffered[0]?.id ?? '',
+      status: 'completed',
+      locationPreference: 'Downtown Studio',
+      createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+      updatedAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+      proposedTimes: [
+        {
+          id: 'slot-completed-2',
+          proposedById: '5',
+          startISO: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+          endISO: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000).toISOString(),
+          status: 'accepted',
+        },
+      ],
+      acceptedTimeId: 'slot-completed-2',
+      negotiationNotes: [
+        {
+          id: 'msg-completed-3',
+          authorId: '5',
+          body: 'Can you teach me photography?',
+          createdAt: new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'msg-completed-4',
+          authorId: currentUser.id,
+          body: 'Swap completed! Great shooting session.',
+          createdAt: new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000).toISOString(),
+          isSystem: true,
+        },
+      ],
+    };
+
+    return [swapA, swapB, swapC, swapD];
   });
 
   const buildDerived = useCallback(
