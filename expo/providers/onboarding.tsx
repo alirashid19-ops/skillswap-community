@@ -61,8 +61,26 @@ export const [OnboardingProvider, useOnboarding] = createContextHook<OnboardingC
 
       const key = `${ONBOARDING_KEY}_${user.id}`;
       const completed = await AsyncStorage.getItem(key);
-      const hasCompleted = completed === 'true';
-      
+      let hasCompleted = completed === 'true';
+
+      // Fallback: if the user-specific key doesn't exist, check the guest key.
+      // This handles local-auth users whose ID changes between sessions.
+      if (!hasCompleted) {
+        const guestKey = `${ONBOARDING_KEY}_guest`;
+        const guestCompleted = await AsyncStorage.getItem(guestKey);
+        if (guestCompleted === 'true') {
+          // Migrate guest onboarding to this user's key so future checks are fast.
+          await AsyncStorage.setItem(key, 'true');
+          const guestDataKey = `${ONBOARDING_KEY}_guest_data`;
+          const guestData = await AsyncStorage.getItem(guestDataKey);
+          if (guestData) {
+            await AsyncStorage.setItem(`${ONBOARDING_KEY}_${user.id}_data`, guestData);
+          }
+          hasCompleted = true;
+          console.log('[Onboarding] Migrated guest onboarding to user key:', user.id);
+        }
+      }
+
       console.log('[Onboarding] Status:', { hasCompleted, userId: user.id });
       setHasCompletedOnboarding(hasCompleted);
     } catch (error) {
