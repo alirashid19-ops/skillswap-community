@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, MessageCircle, Users, Clock, Coins, Repeat, CreditCard, ArrowRight, Flag, Ban, X, CheckCircle2, ShieldX } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, MessageCircle, Users, Clock, Coins, Repeat, CreditCard, ArrowRight, Flag, Ban, X, CheckCircle2, ShieldX, GraduationCap, Languages, Award, Briefcase, BadgeCheck, FileCheck2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/colors';
 import { mockUsers, getSkillsWithUsers } from '../../mocks/data';
@@ -30,10 +30,12 @@ import type { SkillWithUser, ClassWithTeacher } from '../../types';
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const user = mockUsers.find(u => u.id === id);
   const insets = useSafeAreaInsets();
   const { swaps } = useSkillSwaps();
-  const { currentUser } = useCurrentUser();
+  const { currentUser, allUsers } = useCurrentUser();
+  // Look up through allUsers so the live current user's updated details
+  // (e.g. teacher credentials from onboarding) are reflected here.
+  const user = allUsers.find(u => u.id === id) ?? mockUsers.find(u => u.id === id);
   const { getClassesByTeacher, enrollInClass, isEnrolled } = useClasses();
   const { submitReport, blockUser, unblockUser, isBlocked, reportReasons } = useSafety();
   const [swapModalVisible, setSwapModalVisible] = useState<boolean>(false);
@@ -249,6 +251,86 @@ export default function UserProfileScreen() {
           <Text style={styles.sectionTitle}>About</Text>
           <Text style={styles.bioText}>{user.bio}</Text>
         </View>
+
+        {user.teacherProfile && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.credTitleRow}>
+                <GraduationCap size={20} color={Colors.light.primary} />
+                <Text style={styles.sectionTitle}>Teaching Credentials</Text>
+              </View>
+              {user.teacherProfile.isCertified && (
+                <View style={styles.verifiedChip}>
+                  <BadgeCheck size={13} color="#10B981" />
+                  <Text style={styles.verifiedChipText}>Certified</Text>
+                </View>
+              )}
+            </View>
+
+            {user.teacherProfile.languages.length > 0 && (
+              <View style={styles.credRow}>
+                <Languages size={16} color={Colors.light.primary} />
+                <Text style={styles.credText}>Teaches in {user.teacherProfile.languages.join(', ')}</Text>
+              </View>
+            )}
+            {user.teacherProfile.qualifications.length > 0 && (
+              <View style={styles.credRow}>
+                <Award size={16} color={Colors.light.primary} />
+                <Text style={styles.credText}>{user.teacherProfile.qualifications.join(' · ')}</Text>
+              </View>
+            )}
+            {user.teacherProfile.yearsTeaching ? (
+              <View style={styles.credRow}>
+                <Clock size={16} color={Colors.light.primary} />
+                <Text style={styles.credText}>{user.teacherProfile.yearsTeaching} teaching experience</Text>
+              </View>
+            ) : null}
+            {user.teacherProfile.privateTuition && (
+              <View style={styles.credRow}>
+                <Users size={16} color={Colors.light.primary} />
+                <Text style={styles.credText}>Private tuition & coaching experience</Text>
+              </View>
+            )}
+
+            {user.teacherProfile.certifications.map((cert) => (
+              <View key={cert.id} style={styles.certRow}>
+                <View style={styles.certIconWrap}>
+                  <Award size={14} color="#10B981" />
+                </View>
+                <View style={styles.certContent}>
+                  <Text style={styles.certTitle}>{cert.title}</Text>
+                  {cert.documentUri ? (
+                    <View style={styles.docBadge}>
+                      <FileCheck2 size={11} color="#10B981" />
+                      <Text style={styles.docBadgeText}>Document on file</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.certMeta}>Certificate</Text>
+                  )}
+                </View>
+              </View>
+            ))}
+
+            {user.teacherProfile.careerHistory.length > 0 && (
+              <View style={styles.careerBlock}>
+                <Text style={styles.careerBlockTitle}>Past Experience</Text>
+                {user.teacherProfile.careerHistory.map((entry) => (
+                  <View key={entry.id} style={styles.certRow}>
+                    <View style={[styles.certIconWrap, { backgroundColor: 'rgba(59,130,246,0.12)' }]}>
+                      <Briefcase size={14} color={Colors.light.primary} />
+                    </View>
+                    <View style={styles.certContent}>
+                      <Text style={styles.certTitle}>{entry.role}</Text>
+                      <Text style={styles.certMeta}>
+                        {[entry.organization, entry.years].filter(Boolean).join(' · ') || '—'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -802,6 +884,92 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600' as const,
     color: Colors.light.primary,
+  },
+  credTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  verifiedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+  },
+  verifiedChipText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+    color: '#10B981',
+  },
+  credRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: Colors.light.backgroundSecondary,
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  credText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.light.text,
+    flex: 1,
+  },
+  certRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  certIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  certContent: {
+    flex: 1,
+  },
+  certTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.light.text,
+  },
+  certMeta: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    marginTop: 2,
+  },
+  docBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  docBadgeText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#10B981',
+  },
+  careerBlock: {
+    marginTop: 8,
+  },
+  careerBlockTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.light.textSecondary,
+    marginBottom: 10,
   },
   wantsList: {
     gap: 12,

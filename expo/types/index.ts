@@ -31,6 +31,29 @@ export interface Skill {
 
 export type OnboardingRole = 'teacher' | 'learner' | 'swap';
 
+export interface TeacherCertification {
+  id: string;
+  title: string;
+  documentUri?: string;
+}
+
+export interface CareerEntry {
+  id: string;
+  role: string;
+  organization: string;
+  years: string;
+}
+
+export interface TeacherProfileData {
+  languages: string[];
+  qualifications: string[];
+  isCertified: boolean;
+  certifications: TeacherCertification[];
+  yearsTeaching: string;
+  careerHistory: CareerEntry[];
+  privateTuition: boolean;
+}
+
 export type PricingModel = 'free' | 'per_session' | 'monthly';
 
 export type PremiumTier = 'free' | 'basic' | 'premium' | 'elite';
@@ -50,6 +73,7 @@ export interface User {
   premiumTier: PremiumTier;
   premiumExpiresAt?: string;
   role?: OnboardingRole;
+  teacherProfile?: TeacherProfileData;
 }
 
 export interface SkillWithUser extends Skill {

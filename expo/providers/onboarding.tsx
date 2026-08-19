@@ -3,33 +3,16 @@ import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './auth';
 import { trpc } from '@/lib/trpc';
+import type {
+  OnboardingRole,
+  TeacherCertification,
+  CareerEntry,
+  TeacherProfileData,
+} from '../types';
+
+export type { OnboardingRole, TeacherCertification, CareerEntry, TeacherProfileData };
 
 const ONBOARDING_KEY = '@skillswap/onboarding_complete';
-
-export type OnboardingRole = 'teacher' | 'learner' | 'swap';
-
-export interface TeacherCertification {
-  id: string;
-  title: string;
-  documentUri?: string;
-}
-
-export interface CareerEntry {
-  id: string;
-  role: string;
-  organization: string;
-  years: string;
-}
-
-export interface TeacherProfileData {
-  languages: string[];
-  qualifications: string[];
-  isCertified: boolean;
-  certifications: TeacherCertification[];
-  yearsTeaching: string;
-  careerHistory: CareerEntry[];
-  privateTuition: boolean;
-}
 
 export interface OnboardingData {
   role?: OnboardingRole;

@@ -62,6 +62,9 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
           updated.skillsWanted = [...prev.skillsWanted, ...additions];
         }
       }
+      if (data.teacherProfile) {
+        updated.teacherProfile = data.teacherProfile;
+      }
       console.log('[CurrentUser] Applied onboarding data', {
         role: updated.role,
         skillsOffered: updated.skillsOffered.length,
@@ -140,6 +143,12 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
     return mockUsers.filter((user) => user.id !== currentUser.id);
   }, [currentUser.id, refreshCounter]);
 
+  // Merge the live current user into the user list so profile lookups (e.g.
+  // /profile/[id]) reflect onboarding updates like teacher credentials.
+  const allUsers = useMemo<User[]>(() => {
+    return mockUsers.map((u) => (u.id === currentUser.id ? currentUser : u));
+  }, [currentUser]);
+
   const recommendations = useMemo<MatchRecommendation[]>(() => {
     console.log('[Matching] Recomputing recommendations', { refreshCounter });
     return computeMatchRecommendations(currentUser, otherUsers);
@@ -176,7 +185,7 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
   const value = useMemo<CurrentUserContextValue>(() => {
     return {
       currentUser,
-      allUsers: mockUsers,
+      allUsers,
       recommendations,
       topRecommendations,
       teachMatches,
