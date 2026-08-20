@@ -174,6 +174,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="admin/certifications"
+        options={{
+          headerShown: true,
+          title: 'Certifications',
+        }}
+      />
+      <Stack.Screen
         name="admin/payouts"
         options={{
           headerShown: false,

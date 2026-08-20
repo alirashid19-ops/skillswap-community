@@ -41,10 +41,36 @@ export interface VerificationRequest {
   documentUrl?: string;
 }
 
+export type CertificationStatus = 'pending' | 'approved' | 'rejected';
+
+export interface CertificationRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  skillId: string;
+  skillTitle: string;
+  documentUri?: string;
+  status: CertificationStatus;
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+}
+
+export interface SubmitCertificationInput {
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  skillId: string;
+  skillTitle: string;
+  documentUri?: string;
+}
+
 interface AdminContextValue {
   users: AdminUser[];
   reviews: AdminReview[];
   verificationRequests: VerificationRequest[];
+  certificationRequests: CertificationRequest[];
   isAdminAuthenticated: boolean;
   adminLogin: (email: string, password: string) => Promise<void>;
   adminLogout: () => Promise<void>;
@@ -56,12 +82,17 @@ interface AdminContextValue {
   rejectReview: (reviewId: string, note: string) => void;
   approveVerification: (requestId: string) => void;
   rejectVerification: (requestId: string, reason: string) => void;
+  submitCertification: (input: SubmitCertificationInput) => void;
+  approveCertification: (requestId: string) => void;
+  rejectCertification: (requestId: string, reason: string) => void;
+  getSkillCertificationStatus: (userId: string, skillId: string) => CertificationStatus | null;
   stats: {
     totalUsers: number;
     activeUsers: number;
     bannedUsers: number;
     pendingReviews: number;
     pendingVerifications: number;
+    pendingCertifications: number;
     totalSwaps: number;
   };
 }
@@ -211,10 +242,52 @@ const seedVerificationRequests = (): VerificationRequest[] => {
   ];
 };
 
+const seedCertificationRequests = (): CertificationRequest[] => {
+  const now = new Date();
+  return [
+    {
+      id: 'cr-1',
+      userId: '2',
+      userName: 'Rahul Verma',
+      userAvatar: 'https://i.pravatar.cc/150?img=12',
+      skillId: '3',
+      skillTitle: 'Web Development (React)',
+      documentUri: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400',
+      status: 'pending',
+      submittedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'cr-2',
+      userId: '3',
+      userName: 'Ananya Reddy',
+      userAvatar: 'https://i.pravatar.cc/150?img=5',
+      skillId: '5',
+      skillTitle: 'Hindi Conversation',
+      documentUri: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400',
+      status: 'pending',
+      submittedAt: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+      id: 'cr-3',
+      userId: '4',
+      userName: 'Arjun Mehta',
+      userAvatar: 'https://i.pravatar.cc/150?img=13',
+      skillId: '7',
+      skillTitle: 'Piano Fundamentals',
+      documentUri: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400',
+      status: 'approved',
+      submittedAt: new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      reviewedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      reviewNote: 'ABRSM certificate verified',
+    },
+  ];
+};
+
 export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(() => {
   const [users, setUsers] = useState<AdminUser[]>(seedAdminUsers);
   const [reviews, setReviews] = useState<AdminReview[]>(seedReviews);
   const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>(seedVerificationRequests);
+  const [certificationRequests, setCertificationRequests] = useState<CertificationRequest[]>(seedCertificationRequests);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(false);
 
   const adminLogin = useCallback(async (email: string, password: string) => {
@@ -309,19 +382,64 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(()
     ));
   }, []);
 
+  // Teachers submit a skill certificate for review; replaces any previous
+  // request for the same skill (including approved, since the document changed).
+  const submitCertification = useCallback((input: SubmitCertificationInput) => {
+    console.log('[Admin] New certification request', { userId: input.userId, skillId: input.skillId });
+    setCertificationRequests(prev => {
+      const entry: CertificationRequest = {
+        id: `cr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        ...input,
+        status: 'pending',
+        submittedAt: new Date().toISOString(),
+      };
+      const existingIdx = prev.findIndex(c => c.userId === input.userId && c.skillId === input.skillId);
+      if (existingIdx >= 0) {
+        const next = [...prev];
+        next[existingIdx] = entry;
+        return next;
+      }
+      return [entry, ...prev];
+    });
+  }, []);
+
+  const approveCertification = useCallback((requestId: string) => {
+    console.log('[Admin] Approving certification', { requestId });
+    setCertificationRequests(prev => prev.map(c =>
+      c.id === requestId ? { ...c, status: 'approved' as CertificationStatus, reviewedAt: new Date().toISOString() } : c
+    ));
+  }, []);
+
+  const rejectCertification = useCallback((requestId: string, reason: string) => {
+    console.log('[Admin] Rejecting certification', { requestId });
+    setCertificationRequests(prev => prev.map(c =>
+      c.id === requestId ? { ...c, status: 'rejected' as CertificationStatus, reviewedAt: new Date().toISOString(), reviewNote: reason } : c
+    ));
+  }, []);
+
+  const getSkillCertificationStatus = useCallback((userId: string, skillId: string): CertificationStatus | null => {
+    const forSkill = certificationRequests.filter(c => c.userId === userId && c.skillId === skillId);
+    if (forSkill.length === 0) return null;
+    if (forSkill.some(c => c.status === 'approved')) return 'approved';
+    const latest = [...forSkill].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))[0];
+    return latest?.status ?? null;
+  }, [certificationRequests]);
+
   const stats = useMemo(() => ({
     totalUsers: users.length,
     activeUsers: users.filter(u => u.banStatus === 'active').length,
     bannedUsers: users.filter(u => u.banStatus === 'banned').length,
     pendingReviews: reviews.filter(r => r.moderationStatus === 'pending').length,
     pendingVerifications: verificationRequests.filter(vr => vr.status === 'pending').length,
+    pendingCertifications: certificationRequests.filter(c => c.status === 'pending').length,
     totalSwaps: users.reduce((sum, u) => sum + u.totalSwaps, 0),
-  }), [users, reviews, verificationRequests]);
+  }), [users, reviews, verificationRequests, certificationRequests]);
 
   return useMemo<AdminContextValue>(() => ({
     users,
     reviews,
     verificationRequests,
+    certificationRequests,
     isAdminAuthenticated,
     adminLogin,
     adminLogout,
@@ -333,6 +451,10 @@ export const [AdminProvider, useAdmin] = createContextHook<AdminContextValue>(()
     rejectReview,
     approveVerification,
     rejectVerification,
+    submitCertification,
+    approveCertification,
+    rejectCertification,
+    getSkillCertificationStatus,
     stats,
-  }), [users, reviews, verificationRequests, isAdminAuthenticated, adminLogin, adminLogout, banUser, unbanUser, suspendUser, updateUserCredits, approveReview, rejectReview, approveVerification, rejectVerification, stats]);
+  }), [users, reviews, verificationRequests, certificationRequests, isAdminAuthenticated, adminLogin, adminLogout, banUser, unbanUser, suspendUser, updateUserCredits, approveReview, rejectReview, approveVerification, rejectVerification, submitCertification, approveCertification, rejectCertification, getSkillCertificationStatus, stats]);
 });

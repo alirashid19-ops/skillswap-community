@@ -10,7 +10,7 @@ import {
 import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2, Download, ScrollText, Upload, FileCheck2, BadgeCheck } from 'lucide-react-native';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2, Download, ScrollText, Upload, FileCheck2, BadgeCheck, Clock, XCircle } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +18,7 @@ import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 import { trpc } from '@/lib/trpc';
 import { useCurrentUser } from '@/providers/current-user';
+import { useAdmin } from '@/providers/admin';
 import { useEarnings } from '@/providers/earnings';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
@@ -33,6 +34,7 @@ export default function ProfileScreen() {
   const auth = useAuth();
   const { resetOnboarding } = useOnboarding();
   const { currentUser, attachSkillCertificate, removeSkillCertificate } = useCurrentUser();
+  const { submitCertification, getSkillCertificationStatus } = useAdmin();
   const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'swap';
   const { getSummary } = useEarnings();
   const earningsSummary = getSummary(currentUser.id);
@@ -84,7 +86,15 @@ export default function ProfileScreen() {
       const uri = result.assets?.[0]?.uri;
       if (!result.canceled && uri) {
         attachSkillCertificate(skillId, uri);
-        Alert.alert('Certificate uploaded', `Your certificate for "${skillTitle}" is now attached to this skill.`);
+        submitCertification({
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userAvatar: currentUser.avatarUrl,
+          skillId,
+          skillTitle,
+          documentUri: uri,
+        });
+        Alert.alert('Certificate submitted', `Your certificate for "${skillTitle}" has been submitted for admin verification.`);
       }
     } catch (error) {
       console.warn('[Profile] Certificate upload failed:', error);
@@ -404,7 +414,14 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
             <View style={styles.skillsGrid}>
-              {currentUser.skillsOffered.map((skill) => (
+              {currentUser.skillsOffered.map((skill) => {
+                const certStatus = skill.certificateUri ? getSkillCertificationStatus(currentUser.id, skill.id) : null;
+                const certView = certStatus === 'approved'
+                  ? { Icon: BadgeCheck, color: '#10B981', label: 'Certificate verified' }
+                  : certStatus === 'rejected'
+                    ? { Icon: XCircle, color: '#EF4444', label: 'Certificate rejected' }
+                    : { Icon: Clock, color: '#F59E0B', label: 'Under admin review' };
+                return (
                 <View key={skill.id} style={styles.skillCardWrap}>
                   <TouchableOpacity
                     style={styles.skillCard}
@@ -427,8 +444,8 @@ export default function ProfileScreen() {
                           <Text style={styles.skillCardBadgeText}>{skill.level}</Text>
                         </View>
                         {skill.certificateUri && (
-                          <View style={styles.skillCertChip}>
-                            <BadgeCheck size={13} color="#FFFFFF" />
+                          <View style={[styles.skillCertChip, { backgroundColor: certStatus === 'approved' ? '#10B981' : certStatus === 'rejected' ? '#EF4444' : '#F59E0B' }]}>
+                            {certStatus === 'approved' ? <BadgeCheck size={13} color="#FFFFFF" /> : <Clock size={13} color="#FFFFFF" />}
                           </View>
                         )}
                       </View>
@@ -440,9 +457,9 @@ export default function ProfileScreen() {
                   {isTeacher && (
                     skill.certificateUri ? (
                       <View style={styles.skillCertRow}>
-                        <View style={styles.skillCertAttached}>
-                          <FileCheck2 size={14} color="#10B981" />
-                          <Text style={styles.skillCertAttachedText} numberOfLines={1}>Certificate attached</Text>
+                        <View style={[styles.skillCertAttached, { backgroundColor: certView.color + '14' }]}>
+                          <certView.Icon size={14} color={certView.color} />
+                          <Text style={[styles.skillCertAttachedText, { color: certView.color }]} numberOfLines={1}>{certView.label}</Text>
                         </View>
                         <TouchableOpacity
                           style={styles.skillCertAction}
@@ -471,7 +488,8 @@ export default function ProfileScreen() {
                     )
                   )}
                 </View>
-              ))}
+                );
+              })}
             </View>
           </View>
 

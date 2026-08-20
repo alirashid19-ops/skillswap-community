@@ -23,6 +23,7 @@ import {
   BarChart3,
   Wallet,
   ShieldX,
+  Award,
 } from 'lucide-react-native';
 import { useAdmin } from '@/providers/admin';
 import { useSafety } from '@/providers/safety';
@@ -87,6 +88,15 @@ export default function AdminDashboard() {
       bg: '#ECFDF5',
       route: '/admin/verifications',
       badge: stats.pendingVerifications > 0 ? stats.pendingVerifications : undefined,
+    },
+    {
+      title: 'Certification Approvals',
+      subtitle: `${stats.pendingCertifications} pending skill certificate${stats.pendingCertifications !== 1 ? 's' : ''}`,
+      icon: Award,
+      color: '#0EA5E9',
+      bg: '#E0F2FE',
+      route: '/admin/certifications',
+      badge: stats.pendingCertifications > 0 ? stats.pendingCertifications : undefined,
     },
     {
       title: 'Payout Approvals',
@@ -168,7 +178,7 @@ export default function AdminDashboard() {
             <View style={styles.alertContent}>
               <Text style={styles.alertTitle}>Pending Actions</Text>
               <Text style={styles.alertDesc}>
-                {stats.pendingReviews} reviews, {stats.pendingVerifications} verifications, and {pendingReportsCount} user reports need attention
+                {stats.pendingReviews} reviews, {stats.pendingVerifications} verifications, {stats.pendingCertifications} certifications, and {pendingReportsCount} user reports need attention
               </Text>
             </View>
           </View>
