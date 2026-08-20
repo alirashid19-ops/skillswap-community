@@ -21,6 +21,8 @@ interface CurrentUserContextValue {
   applyOnboardingData: (data: Partial<OnboardingData>) => void;
   addSkill: (skill: Skill) => void;
   removeSkill: (skillId: string) => void;
+  attachSkillCertificate: (skillId: string, documentUri: string) => void;
+  removeSkillCertificate: (skillId: string) => void;
   addLearnSkill: (title: string) => void;
   removeLearnSkill: (title: string) => void;
   spendCredits: (amount: number) => boolean;
@@ -85,6 +87,24 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
     setCurrentUser(prev => ({
       ...prev,
       skillsOffered: prev.skillsOffered.filter(s => s.id !== skillId),
+    }));
+  }, []);
+
+  const attachSkillCertificate = useCallback((skillId: string, documentUri: string) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      skillsOffered: prev.skillsOffered.map(s =>
+        s.id === skillId ? { ...s, certificateUri: documentUri } : s
+      ),
+    }));
+  }, []);
+
+  const removeSkillCertificate = useCallback((skillId: string) => {
+    setCurrentUser(prev => ({
+      ...prev,
+      skillsOffered: prev.skillsOffered.map(s =>
+        s.id === skillId ? { ...s, certificateUri: undefined } : s
+      ),
     }));
   }, []);
 
@@ -195,13 +215,15 @@ export const [CurrentUserProvider, useCurrentUser] = createContextHook<CurrentUs
       applyOnboardingData,
       addSkill,
       removeSkill,
+      attachSkillCertificate,
+      removeSkillCertificate,
       addLearnSkill,
       removeLearnSkill,
       spendCredits,
       earnCredits,
       refreshRecommendations,
     };
-  }, [currentUser, recommendations, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, applyOnboardingData, addSkill, removeSkill, addLearnSkill, removeLearnSkill, spendCredits, earnCredits, refreshRecommendations]);
+  }, [currentUser, recommendations, topRecommendations, teachMatches, learnMatches, swapMatches, userRole, applyOnboardingData, addSkill, removeSkill, attachSkillCertificate, removeSkillCertificate, addLearnSkill, removeLearnSkill, spendCredits, earnCredits, refreshRecommendations]);
 
   return value;
 });

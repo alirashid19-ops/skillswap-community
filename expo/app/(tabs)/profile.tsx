@@ -5,10 +5,12 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useMemo } from 'react';
 import { useRouter } from 'expo-router';
-import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2, Download, ScrollText } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { MapPin, Star, Calendar, Sparkles, TrendingUp, Award, LogOut, Coins, Crown, ShoppingBag, ShieldCheck, RefreshCw, Plus, Settings, HelpCircle, FileText, Lock, MessageSquare, Info, Wallet, Users, Share2, Download, ScrollText, Upload, FileCheck2, BadgeCheck } from 'lucide-react-native';
 import { useAuth } from '@/providers/auth';
 import { useOnboarding } from '@/providers/onboarding';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,7 +32,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const auth = useAuth();
   const { resetOnboarding } = useOnboarding();
-  const { currentUser } = useCurrentUser();
+  const { currentUser, attachSkillCertificate, removeSkillCertificate } = useCurrentUser();
   const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'swap';
   const { getSummary } = useEarnings();
   const earningsSummary = getSummary(currentUser.id);
@@ -70,6 +72,39 @@ export default function ProfileScreen() {
     console.log('[Profile] Restarting onboarding');
     await resetOnboarding();
     router.replace('/onboarding' as any);
+  };
+
+  const handleUploadCertificate = async (skillId: string, skillTitle: string) => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.8,
+      });
+      const uri = result.assets?.[0]?.uri;
+      if (!result.canceled && uri) {
+        attachSkillCertificate(skillId, uri);
+        Alert.alert('Certificate uploaded', `Your certificate for "${skillTitle}" is now attached to this skill.`);
+      }
+    } catch (error) {
+      console.warn('[Profile] Certificate upload failed:', error);
+      Alert.alert('Upload failed', 'Could not attach the document. Please try again.');
+    }
+  };
+
+  const handleRemoveCertificate = (skillId: string, skillTitle: string) => {
+    Alert.alert(
+      'Remove certificate?',
+      `The document attached to "${skillTitle}" will be removed from this skill.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeSkillCertificate(skillId),
+        },
+      ],
+    );
   };
 
   return (
@@ -370,31 +405,72 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.skillsGrid}>
               {currentUser.skillsOffered.map((skill) => (
-                <TouchableOpacity
-                  key={skill.id}
-                  style={styles.skillCard}
-                  onPress={() => router.push(`/skill/${skill.id}` as any)}
-                >
-                  {skill.imageUrl ? (
-                    <Image
-                      source={{ uri: skill.imageUrl }}
-                      style={styles.skillImage}
-                    />
-                  ) : (
-                    <View style={[styles.skillImage, { backgroundColor: Colors.light.backgroundTertiary }]} />
-                  )}
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.8)']}
-                    style={styles.skillOverlay}
+                <View key={skill.id} style={styles.skillCardWrap}>
+                  <TouchableOpacity
+                    style={styles.skillCard}
+                    onPress={() => router.push(`/skill/${skill.id}` as any)}
                   >
-                    <Text style={styles.skillCardTitle} numberOfLines={2}>
-                      {skill.title}
-                    </Text>
-                    <View style={styles.skillCardBadge}>
-                      <Text style={styles.skillCardBadgeText}>{skill.level}</Text>
-                    </View>
-                  </LinearGradient>
-                </TouchableOpacity>
+                    {skill.imageUrl ? (
+                      <Image
+                        source={{ uri: skill.imageUrl }}
+                        style={styles.skillImage}
+                      />
+                    ) : (
+                      <View style={[styles.skillImage, { backgroundColor: Colors.light.backgroundTertiary }]} />
+                    )}
+                    <LinearGradient
+                      colors={['transparent', 'rgba(0,0,0,0.8)']}
+                      style={styles.skillOverlay}
+                    >
+                      <View style={styles.skillCardTopRow}>
+                        <View style={styles.skillCardBadge}>
+                          <Text style={styles.skillCardBadgeText}>{skill.level}</Text>
+                        </View>
+                        {skill.certificateUri && (
+                          <View style={styles.skillCertChip}>
+                            <BadgeCheck size={13} color="#FFFFFF" />
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.skillCardTitle} numberOfLines={2}>
+                        {skill.title}
+                      </Text>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                  {isTeacher && (
+                    skill.certificateUri ? (
+                      <View style={styles.skillCertRow}>
+                        <View style={styles.skillCertAttached}>
+                          <FileCheck2 size={14} color="#10B981" />
+                          <Text style={styles.skillCertAttachedText} numberOfLines={1}>Certificate attached</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.skillCertAction}
+                          onPress={() => handleUploadCertificate(skill.id, skill.title)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.skillCertActionText}>Replace</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.skillCertAction}
+                          onPress={() => handleRemoveCertificate(skill.id, skill.title)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[styles.skillCertActionText, { color: Colors.light.error }]}>Remove</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        style={styles.skillCertUploadBtn}
+                        onPress={() => handleUploadCertificate(skill.id, skill.title)}
+                        activeOpacity={0.75}
+                      >
+                        <Upload size={14} color="#059669" />
+                        <Text style={styles.skillCertUploadText}>Upload certificate / document</Text>
+                      </TouchableOpacity>
+                    )
+                  )}
+                </View>
               ))}
             </View>
           </View>
@@ -907,7 +983,72 @@ const styles = StyleSheet.create({
     color: Colors.light.textSecondary,
   },
   skillsGrid: {
-    gap: 12,
+    gap: 16,
+  },
+  skillCardWrap: {
+    gap: 8,
+  },
+  skillCardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  skillCertChip: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.9)',
+  },
+  skillCertRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  skillCertAttached: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  skillCertAttachedText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: '#10B981',
+    flex: 1,
+  },
+  skillCertAction: {
+    paddingVertical: 9,
+    paddingHorizontal: 8,
+  },
+  skillCertActionText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: Colors.light.primary,
+  },
+  skillCertUploadBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    borderStyle: 'dashed' as const,
+    backgroundColor: 'rgba(16,185,129,0.06)',
+  },
+  skillCertUploadText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#059669',
   },
   skillCard: {
     height: 160,

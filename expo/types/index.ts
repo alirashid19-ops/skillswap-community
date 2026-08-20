@@ -27,6 +27,7 @@ export interface Skill {
   monthlyPrice?: number;
   promoted?: boolean;
   promoTagline?: string;
+  certificateUri?: string;
 }
 
 export type OnboardingRole = 'teacher' | 'learner' | 'swap';
