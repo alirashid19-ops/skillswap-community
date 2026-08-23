@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,8 +8,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle, XCircle, RefreshCw, Home, Coins, BookOpen } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useQuizzes } from '@/providers/quizzes';
-
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 const RING_SIZE = 190;
 const RING_RADIUS = 80;
@@ -26,18 +24,26 @@ export default function QuizResultScreen() {
   const quiz = useMemo(() => (attempt ? getQuizById(attempt.quizId) : undefined), [attempt, getQuizById]);
 
   const progress = useRef(new Animated.Value(0)).current;
+  const [dashOffset, setDashOffset] = useState<number>(CIRCUMFERENCE);
 
   useEffect(() => {
     if (!attempt) return;
-    const percent = attempt.score / attempt.total;
+    const targetOffset = CIRCUMFERENCE * (1 - attempt.score / attempt.total);
+    // Animate via listener instead of createAnimatedComponent: wrapping an SVG
+    // element in Animated injects `collapsable={false}`, which react-native-svg
+    // forwards to the DOM on web and triggers a React warning.
+    const listener = progress.addListener(({ value }) => {
+      setDashOffset(CIRCUMFERENCE - targetOffset * value);
+    });
     Animated.timing(progress, {
-      toValue: percent,
+      toValue: 1,
       duration: 1200,
       useNativeDriver: false,
     }).start();
     Haptics.notificationAsync(
       attempt.passed ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error,
     ).catch(() => undefined);
+    return () => progress.removeListener(listener);
   }, [attempt, progress]);
 
   if (!attempt || !quiz) {
@@ -50,10 +56,6 @@ export default function QuizResultScreen() {
 
   const percent = Math.round((attempt.score / attempt.total) * 100);
   const ringColor = attempt.passed ? '#10B981' : '#EF4444';
-  const dashOffset = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [CIRCUMFERENCE, CIRCUMFERENCE * (1 - attempt.score / attempt.total)],
-  });
 
   return (
     <View style={styles.container}>
@@ -61,7 +63,7 @@ export default function QuizResultScreen() {
         <View style={styles.ringWrap}>
           <Svg width={RING_SIZE} height={RING_SIZE}>
             <Circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_RADIUS} stroke={Colors.light.borderLight} strokeWidth={STROKE_WIDTH} fill="none" />
-            <AnimatedCircle
+            <Circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
               r={RING_RADIUS}
