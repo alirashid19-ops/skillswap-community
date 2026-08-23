@@ -91,6 +91,40 @@ export interface MatchRecommendation {
   primarySkill: string | null;
 }
 
+export type QuizDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
+}
+
+export interface SkillQuiz {
+  id: string;
+  skillId: string;
+  title: string;
+  description: string;
+  difficulty: QuizDifficulty;
+  timeLimitMinutes: number;
+  passPercent: number;
+  questions: QuizQuestion[];
+  generatedByAi?: boolean;
+}
+
+export interface QuizAttempt {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  passed: boolean;
+  creditsEarned: number;
+  answers: Record<string, number>;
+  completedAt: string;
+}
+
 export interface ResourceMeta {
   id: string;
   title: string;

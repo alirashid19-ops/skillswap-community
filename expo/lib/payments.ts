@@ -41,6 +41,9 @@ export const TEACHER_EARNINGS = {
 /** Learner earns a small bonus for completing a swap */
 export const LEARNER_SWAP_COMPLETION_BONUS = 10;
 
+/** Learner earns credits for passing a practice quiz (first pass per quiz only) */
+export const QUIZ_PASS_CREDIT_REWARD = 10;
+
 // --- Earning rules for display in the earnings dashboard ---
 export const EARNING_RULES: EarningRule[] = [
   {
