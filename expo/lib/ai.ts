@@ -3,6 +3,8 @@
  * Uses Google Gemini 2.5 Flash (fast, capable, cost-effective).
  */
 
+import type { QuizQuestion } from '../types';
+
 const TOOLKIT_URL = process.env.EXPO_PUBLIC_TOOLKIT_URL;
 const TOOLKIT_SECRET = process.env.EXPO_PUBLIC_RORK_TOOLKIT_SECRET_KEY;
 
@@ -188,4 +190,67 @@ export async function generateMatchInsight(
   ];
   const result = await chatCompletion(messages, { temperature: 0.7, maxTokens: 120 });
   return result.trim();
+}
+
+/**
+ * Generate a multiple-choice practice quiz for a skill.
+ * Returns validated QuizQuestion[] parsed from the model's JSON output.
+ */
+export async function generateQuizQuestions(
+  skillTitle: string,
+  level: string,
+  count = 5,
+): Promise<QuizQuestion[]> {
+  const messages: ChatMessage[] = [
+    {
+      role: 'system',
+      content:
+        'You are a quiz generator for leteski, a skill-learning platform. You output ONLY a valid JSON array — no markdown, no code fences, no commentary. Each element must be an object with keys: question (string), options (array of exactly 4 strings), correctIndex (integer 0-3), explanation (one short sentence).',
+    },
+    {
+      role: 'user',
+      content: `Create ${count} multiple-choice practice questions for the skill "${skillTitle}" at ${level} level. Mix fundamentals with one practical scenario. Keep questions and options concise.`,
+    },
+  ];
+  const raw = await chatCompletion(messages, { temperature: 0.8, maxTokens: 900 });
+
+  // Extract the JSON array even if wrapped in stray text or code fences.
+  const start = raw.indexOf('[');
+  const end = raw.lastIndexOf(']');
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error('AI quiz response was not valid JSON');
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw.slice(start, end + 1));
+  } catch {
+    throw new Error('AI quiz response was not valid JSON');
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error('AI quiz response was not an array');
+  }
+
+  return parsed
+    .filter((item): item is Record<string, unknown> => {
+      if (typeof item !== 'object' || item === null) return false;
+      const opts = item.options;
+      return (
+        typeof item.question === 'string' &&
+        Array.isArray(opts) &&
+        opts.length === 4 &&
+        opts.every((o) => typeof o === 'string') &&
+        typeof item.correctIndex === 'number' &&
+        item.correctIndex >= 0 &&
+        item.correctIndex <= 3
+      );
+    })
+    .map((item, idx) => ({
+      id: `aiq-${Date.now()}-${idx}`,
+      question: item.question as string,
+      options: item.options as string[],
+      correctIndex: item.correctIndex as number,
+      explanation: typeof item.explanation === 'string' ? item.explanation : undefined,
+    }));
 }

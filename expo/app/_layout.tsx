@@ -16,6 +16,7 @@ import { ResourcesProvider } from "../providers/resources";
 import { OnboardingProvider } from "../providers/onboarding";
 import { AdminProvider } from "../providers/admin";
 import { EarningsProvider } from "../providers/earnings";
+import { QuizzesProvider } from "../providers/quizzes";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -53,6 +54,25 @@ function RootLayoutNav() {
         options={{
           headerShown: true,
           title: 'My Classes',
+        }}
+      />
+      <Stack.Screen
+        name="quiz/[id]"
+        options={{
+          headerShown: true,
+          title: 'Practice Test',
+        }}
+      />
+      <Stack.Screen
+        name="quiz/take/[id]"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="quiz/result/[attemptId]"
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen
@@ -268,6 +288,7 @@ export default function RootLayout() {
         <AuthProvider>
           <OnboardingProvider>
             <CurrentUserProvider>
+              <QuizzesProvider>
               <EarningsProvider>
                 <SkillSwapsProvider>
                   <SafetyProvider>
@@ -287,6 +308,7 @@ export default function RootLayout() {
                   </SafetyProvider>
                 </SkillSwapsProvider>
               </EarningsProvider>
+              </QuizzesProvider>
             </CurrentUserProvider>
           </OnboardingProvider>
         </AuthProvider>

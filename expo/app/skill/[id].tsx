@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { MapPin, Star, Users, ArrowRight, Award, Clock, CalendarCheck2, IndianRupee, Sparkles, Trash2, Coins } from 'lucide-react-native';
+import { MapPin, Star, Users, ArrowRight, Award, Clock, CalendarCheck2, IndianRupee, Sparkles, Trash2, Coins, ClipboardList } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '../../constants/colors';
@@ -14,6 +14,15 @@ import { useCurrentUser } from '../../providers/current-user';
 import type { SkillSwapStatus } from '../../types';
 import { formatPrice } from '../../constants/locale';
 import { getSessionCreditCost, formatCredits } from '../../lib/payments';
+import { useQuizzes } from '../../providers/quizzes';
+import { generateQuizQuestions } from '../../lib/ai';
+import type { QuizDifficulty } from '../../types';
+
+const quizDifficultyConfig: Record<QuizDifficulty, { color: string; bg: string; label: string }> = {
+  easy: { color: '#10B981', bg: '#ECFDF5', label: 'Easy' },
+  medium: { color: '#F59E0B', bg: '#FFFBEB', label: 'Medium' },
+  hard: { color: '#EF4444', bg: '#FEF2F2', label: 'Hard' },
+};
 
 const swapStatusPalette: Record<SkillSwapStatus | 'fallback', { bg: string; border: string }> = {
   pending: { bg: 'rgba(249, 115, 22, 0.15)', border: 'rgba(249, 115, 22, 0.4)' },
@@ -40,6 +49,8 @@ export default function SkillDetailScreen() {
   const skill = useMemo(() => skillsWithUsers.find(s => s.id === id), [skillsWithUsers, id]);
   const { swaps } = useSkillSwaps();
   const { currentUser, removeSkill } = useCurrentUser();
+  const { getQuizzesForSkill, getBestAttempt, addQuiz } = useQuizzes();
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState<boolean>(false);
   const [isSwapModalVisible, setSwapModalVisible] = useState<boolean>(false);
   const isOwner = skill?.userId === currentUser.id;
 
@@ -111,6 +122,37 @@ export default function SkillDetailScreen() {
     }
     setSwapModalVisible(true);
   }, [activeSwap, router]);
+
+  const skillQuizzes = useMemo(() => (skill ? getQuizzesForSkill(skill.id) : []), [skill, getQuizzesForSkill]);
+
+  const handleGenerateQuiz = useCallback(async () => {
+    if (!skill || isGeneratingQuiz) return;
+    setIsGeneratingQuiz(true);
+    try {
+      const questions = await generateQuizQuestions(skill.title, skill.level);
+      if (questions.length === 0) {
+        throw new Error('AI returned no usable questions');
+      }
+      const quiz = {
+        id: `quiz-ai-${Date.now()}`,
+        skillId: skill.id,
+        title: `${skill.title} — AI Practice Test`,
+        description: `Fresh practice questions generated for ${skill.title}.`,
+        difficulty: 'medium' as const,
+        timeLimitMinutes: 5,
+        passPercent: 60,
+        questions,
+        generatedByAi: true,
+      };
+      addQuiz(quiz);
+      router.push(`/quiz/${quiz.id}` as any);
+    } catch (error) {
+      console.warn('[SkillDetail] AI quiz generation failed:', error);
+      Alert.alert('Generation failed', 'Could not generate a practice test right now. Please try again.');
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  }, [skill, isGeneratingQuiz, addQuiz, router]);
 
   const handleDeleteSkill = useCallback(() => {
     Alert.alert(
@@ -298,6 +340,62 @@ export default function SkillDetailScreen() {
             <View style={styles.aboutCard}>
               <Text style={styles.aboutText}>{skill.user.bio}</Text>
             </View>
+          </View>
+
+          <View style={styles.quizSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Practice Tests</Text>
+              <ClipboardList size={18} color="#6366F1" />
+            </View>
+            {skillQuizzes.map(quiz => {
+              const best = getBestAttempt(quiz.id);
+              const difficulty = quizDifficultyConfig[quiz.difficulty];
+              return (
+                <TouchableOpacity
+                  key={quiz.id}
+                  style={styles.quizCard}
+                  onPress={() => router.push(`/quiz/${quiz.id}` as any)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.quizCardTop}>
+                    <Text style={styles.quizCardTitle} numberOfLines={1}>{quiz.title}</Text>
+                    {quiz.generatedByAi && (
+                      <View style={styles.quizAiChip}>
+                        <Sparkles size={10} color="#6366F1" />
+                        <Text style={styles.quizAiChipText}>AI</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.quizMetaRow}>
+                    <View style={[styles.quizChip, { backgroundColor: difficulty.bg }]}>
+                      <Text style={[styles.quizChipText, { color: difficulty.color }]}>{difficulty.label}</Text>
+                    </View>
+                    <Text style={styles.quizMetaText}>{quiz.questions.length} questions</Text>
+                    <Text style={styles.quizMetaDot}>·</Text>
+                    <Text style={styles.quizMetaText}>{quiz.timeLimitMinutes} min</Text>
+                    {best && (
+                      <Text style={styles.quizBestText}>Best {best.score}/{best.total}</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity
+              style={styles.quizGenerateBtn}
+              onPress={handleGenerateQuiz}
+              disabled={isGeneratingQuiz}
+              activeOpacity={0.75}
+              testID="generate-quiz-button"
+            >
+              {isGeneratingQuiz ? (
+                <ActivityIndicator size="small" color="#6366F1" />
+              ) : (
+                <Sparkles size={16} color="#6366F1" />
+              )}
+              <Text style={styles.quizGenerateText}>
+                {isGeneratingQuiz ? 'Generating questions…' : 'Generate practice test with AI'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.wantsSection}>
@@ -550,6 +648,90 @@ const styles = StyleSheet.create({
   },
   wantsSection: {
     marginBottom: 24,
+  },
+  quizSection: {
+    marginBottom: 24,
+    gap: 10,
+  },
+  quizCard: {
+    backgroundColor: Colors.light.backgroundTertiary,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.light.borderLight,
+    gap: 10,
+  },
+  quizCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  quizCardTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700' as const,
+    color: Colors.light.text,
+  },
+  quizAiChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  quizAiChipText: {
+    fontSize: 10,
+    fontWeight: '800' as const,
+    color: '#6366F1',
+  },
+  quizMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap' as const,
+  },
+  quizChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  quizChipText: {
+    fontSize: 11,
+    fontWeight: '700' as const,
+  },
+  quizMetaText: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+    fontWeight: '500' as const,
+  },
+  quizMetaDot: {
+    fontSize: 12,
+    color: Colors.light.textSecondary,
+  },
+  quizBestText: {
+    fontSize: 12,
+    fontWeight: '700' as const,
+    color: '#10B981',
+    marginLeft: 'auto' as any,
+  },
+  quizGenerateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#6366F1',
+    borderStyle: 'dashed' as const,
+    backgroundColor: '#EEF2FF',
+  },
+  quizGenerateText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#6366F1',
   },
   pricingCard: {
     backgroundColor: Colors.light.backgroundTertiary,
