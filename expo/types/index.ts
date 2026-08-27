@@ -446,3 +446,34 @@ export interface BlockedUser {
   blockedUserAvatar: string;
   blockedAt: string;
 }
+
+// ============================================================
+//  Group Class Assignments & Homework
+// ============================================================
+
+export type AssignmentType = 'homework' | 'assignment' | 'project';
+
+/** Work a class teacher assigns to enrolled students. */
+export interface ClassAssignment {
+  id: string;
+  classId: string;
+  teacherId: string;
+  title: string;
+  description: string;
+  type: AssignmentType;
+  dueISO?: string;
+  createdAt: string;
+}
+
+/** A student's submitted answer for an assignment, optionally graded by the teacher. */
+export interface AssignmentSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  text: string;
+  submittedAt: string;
+  status: 'submitted' | 'graded';
+  grade?: number; // 0-100
+  feedback?: string;
+  gradedAt?: string;
+}

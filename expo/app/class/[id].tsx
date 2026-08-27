@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Calendar, Clock, Users as UsersIcon, Coins, MapPin, Star, Sparkles, CheckCircle2, XCircle, ArrowLeft, Repeat, CreditCard, Video } from 'lucide-react-native';
+import { Calendar, Clock, Users as UsersIcon, Coins, MapPin, Star, Sparkles, CheckCircle2, XCircle, ArrowLeft, Repeat, CreditCard, Video, ClipboardList, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
+import { useAssignments } from '@/providers/assignments';
 import { useCurrentUser } from '@/providers/current-user';
 import { formatCredits, getClassEnrollmentCost, formatClassSchedule, formatBillingCycle } from '@/lib/payments';
 
@@ -19,6 +20,11 @@ export default function ClassDetailScreen() {
 
   const cls = useMemo(() => getClassById(id), [getClassById, id]);
   const [enrolled, setEnrolled] = useState(() => id ? isEnrolled(id, currentUser.id) : false);
+  const { getAssignmentsForClass } = useAssignments();
+  const assignmentCount = useMemo(
+    () => (id ? getAssignmentsForClass(id).length : 0),
+    [getAssignmentsForClass, id],
+  );
 
   const enrolledStudents = useMemo(() => {
     if (!cls) return [];
@@ -238,6 +244,30 @@ export default function ClassDetailScreen() {
           <Text style={s.seatsLeft}>{seatsLeft} seat{seatsLeft === 1 ? '' : 's'} left</Text>
         </View>
 
+        {(isTeacher || enrolled) && (
+          <TouchableOpacity
+            style={s.assignCard}
+            onPress={() => router.push(`/class/assignments?classId=${cls.id}` as never)}
+            activeOpacity={0.8}
+            testID="class-assignments-entry"
+          >
+            <View style={s.assignIconWrap}>
+              <ClipboardList size={20} color="#6366F1" />
+            </View>
+            <View style={s.assignInfo}>
+              <Text style={s.assignTitle}>Assignments & Homework</Text>
+              <Text style={s.assignSub}>
+                {isTeacher
+                  ? `${assignmentCount} given · give work and grade submissions`
+                  : assignmentCount > 0
+                    ? `${assignmentCount} item${assignmentCount === 1 ? '' : 's'} to review`
+                    : 'Nothing assigned yet'}
+              </Text>
+            </View>
+            <ChevronRight size={18} color={Colors.light.textTertiary} />
+          </TouchableOpacity>
+        )}
+
         {enrolledStudents.length > 0 && (
           <View style={s.studentsSection}>
             <Text style={s.sectionTitle}>Who's coming</Text>
@@ -374,6 +404,11 @@ const s = StyleSheet.create({
   seatsFill: { height: '100%', backgroundColor: Colors.light.primary, borderRadius: 4 },
   seatsLeft: { fontSize: 13, color: Colors.light.textTertiary, fontWeight: '500' as const },
   studentsSection: { marginBottom: 20 },
+  assignCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.light.card, borderRadius: 16, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: Colors.light.borderLight },
+  assignIconWrap: { width: 42, height: 42, borderRadius: 12, backgroundColor: 'rgba(99,102,241,0.12)', justifyContent: 'center', alignItems: 'center' },
+  assignInfo: { flex: 1 },
+  assignTitle: { fontSize: 15, fontWeight: '700' as const, color: Colors.light.text },
+  assignSub: { fontSize: 12, color: Colors.light.textTertiary, marginTop: 2 },
   studentScroll: { gap: 12, paddingRight: 20 },
   studentChip: { alignItems: 'center', gap: 6, width: 60 },
   studentAvatar: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: Colors.light.border },

@@ -17,6 +17,7 @@ import { OnboardingProvider } from "../providers/onboarding";
 import { AdminProvider } from "../providers/admin";
 import { EarningsProvider } from "../providers/earnings";
 import { QuizzesProvider } from "../providers/quizzes";
+import { AssignmentsProvider } from "../providers/assignments";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,6 +55,19 @@ function RootLayoutNav() {
         options={{
           headerShown: true,
           title: 'My Classes',
+        }}
+      />
+      <Stack.Screen
+        name="class/assignments"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="class/assignments/[assignmentId]"
+        options={{
+          headerShown: true,
+          title: 'Assignment',
         }}
       />
       <Stack.Screen
@@ -293,6 +307,7 @@ export default function RootLayout() {
                 <SkillSwapsProvider>
                   <SafetyProvider>
                   <NotificationsProvider>
+                    <AssignmentsProvider>
                     <ClassesProvider>
                       <ResourcesProvider>
                         <AdminProvider>
@@ -304,6 +319,7 @@ export default function RootLayout() {
                         </AdminProvider>
                       </ResourcesProvider>
                     </ClassesProvider>
+                    </AssignmentsProvider>
                   </NotificationsProvider>
                   </SafetyProvider>
                 </SkillSwapsProvider>
