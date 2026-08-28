@@ -4,10 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { seedAssignments, seedSubmissions } from '../mocks/assignments';
 import { useCurrentUser } from './current-user';
 import { useNotifications } from './notifications';
-import type { AssignmentSubmission, AssignmentType, ClassAssignment } from '../types';
+import type { AssignmentAttachment, AssignmentSubmission, AssignmentType, ClassAssignment } from '../types';
 
 const CREATED_KEY = '@skillswap/assignments_created';
 const SUBMISSIONS_KEY = '@skillswap/assignment_submissions';
+const MATERIALS_KEY = '@skillswap/assignment_materials';
 
 export interface CreateAssignmentInput {
   classId: string;
@@ -29,6 +30,11 @@ interface AssignmentsContextValue {
   submitWork: (assignmentId: string) => { success: boolean; error?: string };
   updateSubmissionText: (assignmentId: string, text: string) => void;
   gradeSubmission: (submissionId: string, grade: number, feedback: string) => void;
+  getMaterials: (assignmentId: string) => AssignmentAttachment[];
+  addMaterial: (assignmentId: string, att: AssignmentAttachment) => void;
+  removeMaterial: (assignmentId: string, attachmentId: string) => void;
+  addSubmissionAttachment: (assignmentId: string, att: AssignmentAttachment) => { success: boolean; error?: string };
+  removeSubmissionAttachment: (assignmentId: string, attachmentId: string) => void;
 }
 
 const generateId = (prefix: string): string =>
@@ -42,16 +48,20 @@ export const [AssignmentsProvider, useAssignments] = createContextHook<Assignmen
   const [createdAssignments, setCreatedAssignments] = useState<ClassAssignment[]>([]);
   const [submissions, setSubmissions] = useState<AssignmentSubmission[]>(seedSubmissions.map(x => ({ ...x })));
   const [hydrated, setHydrated] = useState<boolean>(false);
+  // Materials (teacher reference files) keyed by assignment id — a separate overlay so seeded assignments get them too.
+  const [materials, setMaterials] = useState<Record<string, AssignmentAttachment[]>>({});
 
   useEffect(() => {
     (async () => {
       try {
-        const [rawCreated, rawSubs] = await Promise.all([
+        const [rawCreated, rawSubs, rawMaterials] = await Promise.all([
           AsyncStorage.getItem(CREATED_KEY),
           AsyncStorage.getItem(SUBMISSIONS_KEY),
+          AsyncStorage.getItem(MATERIALS_KEY),
         ]);
         if (rawCreated) setCreatedAssignments(JSON.parse(rawCreated) as ClassAssignment[]);
         if (rawSubs) setSubmissions(JSON.parse(rawSubs) as AssignmentSubmission[]);
+        if (rawMaterials) setMaterials(JSON.parse(rawMaterials) as Record<string, AssignmentAttachment[]>);
       } catch (error) {
         console.warn('[Assignments] Failed to restore saved data:', error);
       } finally {
@@ -69,6 +79,11 @@ export const [AssignmentsProvider, useAssignments] = createContextHook<Assignmen
     if (!hydrated) return;
     AsyncStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions)).catch(() => undefined);
   }, [submissions, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    AsyncStorage.setItem(MATERIALS_KEY, JSON.stringify(materials)).catch(() => undefined);
+  }, [materials, hydrated]);
 
   const assignments = useMemo<ClassAssignment[]>(() => [...seedAssignments, ...createdAssignments], [createdAssignments]);
 
@@ -162,6 +177,56 @@ export const [AssignmentsProvider, useAssignments] = createContextHook<Assignmen
     );
   }, []);
 
+  const getMaterials = useCallback(
+    (assignmentId: string) => materials[assignmentId] ?? [],
+    [materials],
+  );
+
+  const addMaterial = useCallback((assignmentId: string, att: AssignmentAttachment) => {
+    setMaterials(prev => ({ ...prev, [assignmentId]: [...(prev[assignmentId] ?? []), att] }));
+  }, []);
+
+  const removeMaterial = useCallback((assignmentId: string, attachmentId: string) => {
+    setMaterials(prev => ({ ...prev, [assignmentId]: (prev[assignmentId] ?? []).filter(a => a.id !== attachmentId) }));
+  }, []);
+
+  // Attach a file to the current user's submission, creating the submission if needed.
+  const addSubmissionAttachment = useCallback((assignmentId: string, att: AssignmentAttachment): { success: boolean; error?: string } => {
+    const existing = submissions.find(s => s.assignmentId === assignmentId && s.studentId === currentUser.id);
+    if (existing && existing.status === 'graded') {
+      return { success: false, error: 'This submission has already been graded.' };
+    }
+    if (existing) {
+      setSubmissions(prev =>
+        prev.map(s => s.id === existing.id ? { ...s, attachments: [...(s.attachments ?? []), att] } : s),
+      );
+      return { success: true };
+    }
+    setSubmissions(prev => [
+      ...prev,
+      {
+        id: generateId('sub'),
+        assignmentId,
+        studentId: currentUser.id,
+        text: '',
+        submittedAt: new Date().toISOString(),
+        status: 'submitted' as const,
+        attachments: [att],
+      },
+    ]);
+    return { success: true };
+  }, [submissions, currentUser.id]);
+
+  const removeSubmissionAttachment = useCallback((assignmentId: string, attachmentId: string) => {
+    setSubmissions(prev =>
+      prev.map(s =>
+        s.assignmentId === assignmentId && s.studentId === currentUser.id && s.status !== 'graded'
+          ? { ...s, attachments: (s.attachments ?? []).filter(a => a.id !== attachmentId) }
+          : s,
+      ),
+    );
+  }, [currentUser.id]);
+
   const value = useMemo<AssignmentsContextValue>(() => ({
     assignments,
     submissions,
@@ -174,10 +239,16 @@ export const [AssignmentsProvider, useAssignments] = createContextHook<Assignmen
     submitWork,
     updateSubmissionText,
     gradeSubmission,
+    getMaterials,
+    addMaterial,
+    removeMaterial,
+    addSubmissionAttachment,
+    removeSubmissionAttachment,
   }), [
     assignments, submissions, getAssignmentsForClass, getAssignmentById,
     getSubmissionsForAssignment, getMySubmission, createAssignment,
     deleteAssignment, submitWork, updateSubmissionText, gradeSubmission,
+    getMaterials, addMaterial, removeMaterial, addSubmissionAttachment, removeSubmissionAttachment,
   ]);
 
   return value;

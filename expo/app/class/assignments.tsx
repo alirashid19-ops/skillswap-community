@@ -64,19 +64,21 @@ export default function ClassAssignmentsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     const dueMsMap: Record<DueOption, number> = { none: 0, tomorrow: DAY_MS, three_days: 3 * DAY_MS, week: 7 * DAY_MS };
     const ms = dueMsMap[dueOption];
-    createAssignment({
+    const created = createAssignment({
       classId,
       title: title.trim(),
       description: description.trim(),
       type,
       dueISO: ms > 0 ? new Date(Date.now() + ms).toISOString() : undefined,
     });
+    // Jump into the new assignment so the teacher can attach materials right away.
+    router.replace(`/class/assignments/${created.id}` as never);
     setTitle('');
     setDescription('');
     setType('homework');
     setDueOption('tomorrow');
     setFormOpen(false);
-  }, [classId, title, description, type, dueOption, createAssignment]);
+  }, [classId, title, description, type, dueOption, createAssignment, router]);
 
   const formatDue = useCallback((iso?: string) => {
     if (!iso) return 'No due date';

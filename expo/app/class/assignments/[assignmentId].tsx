@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, View, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { ArrowLeft, CalendarDays, BookOpen, CheckCircle2, Clock, MessageSquareText } from 'lucide-react-native';
@@ -8,7 +8,9 @@ import { mockUsers } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
 import { useAssignments } from '@/providers/assignments';
 import { useCurrentUser } from '@/providers/current-user';
-import type { AssignmentType } from '@/types';
+import { AttachmentList } from '@/components/AttachmentList';
+import { pickImageAttachment } from '@/lib/attachments';
+import type { AssignmentAttachment, AssignmentType } from '@/types';
 
 const typeConfig: Record<AssignmentType, { label: string }> = {
   homework: { label: 'Homework' },
@@ -30,6 +32,11 @@ export default function AssignmentDetailScreen() {
     submitWork,
     updateSubmissionText,
     gradeSubmission,
+    getMaterials,
+    addMaterial,
+    removeMaterial,
+    addSubmissionAttachment,
+    removeSubmissionAttachment,
   } = useAssignments();
 
   const assignment = useMemo(() => getAssignmentById(assignmentId ?? ''), [getAssignmentById, assignmentId]);
@@ -45,6 +52,21 @@ export default function AssignmentDetailScreen() {
   const [answerText, setAnswerText] = useState<string>(() => mySubmission?.text ?? '');
   const [savedText, setSavedText] = useState<string>(() => mySubmission?.text ?? '');
   const [turnInError, setTurnInError] = useState<string | null>(null);
+  // Files picked before the first turn-in (no submission record yet).
+  const [pendingAttachments, setPendingAttachments] = useState<AssignmentAttachment[]>([]);
+
+  const materials = useMemo(
+    () => (assignment ? getMaterials(assignment.id) : []),
+    [assignment, getMaterials],
+  );
+  const submittedAttachments = useMemo(
+    () => mySubmission?.attachments ?? [],
+    [mySubmission],
+  );
+  const answerAttachments = useMemo(
+    () => [...submittedAttachments, ...pendingAttachments],
+    [submittedAttachments, pendingAttachments],
+  );
 
   // Teacher grading state per submission id
   const [openGradeId, setOpenGradeId] = useState<string | null>(null);
@@ -61,8 +83,8 @@ export default function AssignmentDetailScreen() {
 
   const handleTurnIn = useCallback(() => {
     if (!assignment) return;
-    if (!answerText.trim()) {
-      setTurnInError('Write your answer before turning in.');
+    if (!answerText.trim() && pendingAttachments.length === 0) {
+      setTurnInError('Write your answer or attach a file before turning in.');
       return;
     }
     if (mySubmission?.status === 'graded') return;
@@ -72,10 +94,55 @@ export default function AssignmentDetailScreen() {
       return;
     }
     updateSubmissionText(assignment.id, answerText.trim());
+    pendingAttachments.forEach(att => addSubmissionAttachment(assignment.id, att));
+    if (pendingAttachments.length > 0) setPendingAttachments([]);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
     setSavedText(answerText.trim());
     setTurnInError(null);
-  }, [assignment, answerText, mySubmission, submitWork, updateSubmissionText]);
+  }, [assignment, answerText, pendingAttachments, mySubmission, submitWork, updateSubmissionText, addSubmissionAttachment]);
+
+  const alertIfTooLarge = useCallback((error: unknown) => {
+    if (error instanceof Error && error.message === 'FILE_TOO_LARGE') {
+      Alert.alert('File too large', 'Please choose an image under 4 MB.');
+    }
+  }, []);
+
+  const handlePickMaterial = useCallback(async () => {
+    if (!assignment) return;
+    try {
+      const att = await pickImageAttachment();
+      if (att) {
+        addMaterial(assignment.id, att);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+      }
+    } catch (error) {
+      alertIfTooLarge(error);
+    }
+  }, [assignment, addMaterial, alertIfTooLarge]);
+
+  const handleRemoveMaterial = useCallback((attachmentId: string) => {
+    if (assignment) removeMaterial(assignment.id, attachmentId);
+  }, [assignment, removeMaterial]);
+
+  const handlePickAnswer = useCallback(async () => {
+    if (!assignment) return;
+    try {
+      const att = await pickImageAttachment();
+      if (!att) return;
+      if (mySubmission) {
+        addSubmissionAttachment(assignment.id, att);
+      } else {
+        setPendingAttachments(prev => [...prev, att]);
+      }
+    } catch (error) {
+      alertIfTooLarge(error);
+    }
+  }, [assignment, mySubmission, addSubmissionAttachment, alertIfTooLarge]);
+
+  const handleRemoveAnswerAttachment = useCallback((attachmentId: string) => {
+    setPendingAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    if (assignment) removeSubmissionAttachment(assignment.id, attachmentId);
+  }, [assignment, removeSubmissionAttachment]);
 
   const handleSaveGrade = useCallback((submissionId: string) => {
     const num = parseInt(gradeValue, 10);
@@ -129,6 +196,10 @@ export default function AssignmentDetailScreen() {
         {sub && (
           <>
             <Text style={s.subBody}>{sub.text || '(No written answer)'}</Text>
+
+            {(sub.attachments?.length ?? 0) > 0 && (
+              <AttachmentList attachments={sub.attachments ?? []} />
+            )}
 
             {sub.status === 'graded' ? (
               sub.feedback ? (
@@ -224,6 +295,19 @@ export default function AssignmentDetailScreen() {
         <Text style={s.description}>{assignment.description}</Text>
       </View>
 
+      <View style={s.materialsCard} testID="materials-card">
+        <View style={s.materialsHeader}>
+          <Text style={s.sectionTitle}>Materials</Text>
+          {isTeacher && <Text style={s.materialsHint}>Files students can download</Text>}
+        </View>
+        <AttachmentList
+          attachments={materials}
+          onAdd={isTeacher ? handlePickMaterial : undefined}
+          onRemove={isTeacher ? handleRemoveMaterial : undefined}
+          addLabel="Add photo"
+        />
+      </View>
+
       {isTeacher ? (
         <View style={{ gap: 12 }}>
           <Text style={s.sectionTitle}>Submissions ({cls?.enrolledCount ?? 0} students)</Text>
@@ -243,6 +327,9 @@ export default function AssignmentDetailScreen() {
               )}
               <Text style={s.yourAnswerLabel}>Your answer</Text>
               <Text style={s.savedAnswer}>{mySubmission.text || savedText || '—'}</Text>
+              {(mySubmission.attachments?.length ?? 0) > 0 && (
+                <AttachmentList attachments={mySubmission.attachments ?? []} />
+              )}
             </View>
           ) : (
             <View style={s.answerCard}>
@@ -261,6 +348,12 @@ export default function AssignmentDetailScreen() {
                 multiline
                 textAlignVertical="top"
                 testID="student-answer-input"
+              />
+              <AttachmentList
+                attachments={answerAttachments}
+                onAdd={isGraded ? undefined : handlePickAnswer}
+                onRemove={isGraded ? undefined : handleRemoveAnswerAttachment}
+                addLabel="Attach photo"
               />
               {turnInError && <Text style={s.errorText}>{turnInError}</Text>}
               <TouchableOpacity style={s.turnInBtn} onPress={handleTurnIn} activeOpacity={0.8} testID="turn-in-button">
@@ -292,6 +385,9 @@ const s = StyleSheet.create({
   description: { fontSize: 14, lineHeight: 21, color: Colors.light.textSecondary },
 
   sectionTitle: { fontSize: 15, fontWeight: '700' as const, color: Colors.light.text },
+  materialsCard: { backgroundColor: Colors.light.card, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: Colors.light.borderLight, gap: 10 },
+  materialsHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  materialsHint: { fontSize: 11, color: Colors.light.textTertiary },
 
   subCard: { backgroundColor: Colors.light.card, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: Colors.light.borderLight, gap: 10 },
   subHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },

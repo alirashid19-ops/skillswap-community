@@ -453,6 +453,16 @@ export interface BlockedUser {
 
 export type AssignmentType = 'homework' | 'assignment' | 'project';
 
+/** A PDF or image file attached to an assignment or a student's submission. */
+export interface AssignmentAttachment {
+  id: string;
+  name: string;
+  kind: 'image' | 'pdf';
+  mimeType: string;
+  sizeBytes: number;
+  data: string; // base64 payload
+}
+
 /** Work a class teacher assigns to enrolled students. */
 export interface ClassAssignment {
   id: string;
@@ -463,6 +473,8 @@ export interface ClassAssignment {
   type: AssignmentType;
   dueISO?: string;
   createdAt: string;
+  /** Teacher-uploaded reference files for students to download. */
+  attachments?: AssignmentAttachment[];
 }
 
 /** A student's submitted answer for an assignment, optionally graded by the teacher. */
@@ -476,4 +488,6 @@ export interface AssignmentSubmission {
   grade?: number; // 0-100
   feedback?: string;
   gradedAt?: string;
+  /** Files the student attached to their answer. */
+  attachments?: AssignmentAttachment[];
 }
