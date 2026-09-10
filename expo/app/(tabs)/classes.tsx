@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, FlatList, TouchableOpacity, Image, TextInput, RefreshControl, ScrollView, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, X, Calendar, Clock, Users, Coins, Sparkles, Plus, Repeat, CreditCard } from 'lucide-react-native';
+import { Search, X, Calendar, Clock, Users, Coins, Sparkles, Plus, Repeat, CreditCard, MessagesSquare, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
@@ -188,6 +188,29 @@ export default function ClassesScreen() {
         ))}
       </ScrollView>
 
+      <TouchableOpacity
+        style={s.communityCard}
+        onPress={() => router.push('/community' as never)}
+        activeOpacity={0.85}
+        testID="community-wall-entry"
+      >
+        <LinearGradient
+          colors={['#6366F1', '#8B5CF6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.communityGradient}
+        >
+          <View style={s.communityIconWrap}>
+            <MessagesSquare size={22} color="#FFFFFF" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.communityTitle}>Community Wall</Text>
+            <Text style={s.communitySub}>Write a post — tips, wins & questions</Text>
+          </View>
+          <ChevronRight size={20} color="rgba(255,255,255,0.9)" />
+        </LinearGradient>
+      </TouchableOpacity>
+
       <View style={s.resultsHeader}>
         <Text style={s.resultsText}>{filteredClasses.length} upcoming class{filteredClasses.length === 1 ? '' : 'es'}</Text>
         <TouchableOpacity onPress={() => router.push('/class/my' as any)}>
@@ -230,6 +253,11 @@ const s = StyleSheet.create({
   catPillActive: { backgroundColor: Colors.light.primary, borderColor: Colors.light.primary },
   catPillText: { fontSize: 13, fontWeight: '600' as const, color: Colors.light.textSecondary },
   catPillTextActive: { color: '#FFFFFF' },
+  communityCard: { paddingHorizontal: 20, paddingTop: 12 },
+  communityGradient: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, padding: 14 },
+  communityIconWrap: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  communityTitle: { fontSize: 15, fontWeight: '800' as const, color: '#FFFFFF' },
+  communitySub: { fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
   resultsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 12 },
   resultsText: { fontSize: 14, fontWeight: '600' as const, color: Colors.light.textSecondary },
   myClassesLink: { fontSize: 14, fontWeight: '700' as const, color: Colors.light.primary },

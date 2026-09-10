@@ -491,3 +491,12 @@ export interface AssignmentSubmission {
   /** Files the student attached to their answer. */
   attachments?: AssignmentAttachment[];
 }
+
+/** A short community post on the shared wall (students and teachers). */
+export interface CommunityPost {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
+  likedBy: string[];
+}
