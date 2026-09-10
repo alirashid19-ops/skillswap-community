@@ -499,4 +499,14 @@ export interface CommunityPost {
   body: string;
   createdAt: string;
   likedBy: string[];
+  /** Replies left on the post, oldest first. */
+  comments?: CommunityComment[];
+}
+
+/** A reply on a community wall post. */
+export interface CommunityComment {
+  id: string;
+  authorId: string;
+  body: string;
+  createdAt: string;
 }

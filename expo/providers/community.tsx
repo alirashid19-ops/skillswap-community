@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
-import type { CommunityPost } from '../types';
+import type { CommunityComment, CommunityPost } from '../types';
 
 const POSTS_KEY = '@skillswap/community_posts';
 
@@ -14,6 +14,20 @@ const seedPosts: CommunityPost[] = [
     body: "Big thanks to everyone who joined yesterday's Hindi grammar session — your questions made it so much fun! Next cohort opens next week.",
     createdAt: new Date(Date.now() - 2 * 60 * MIN_MS).toISOString(),
     likedBy: ['1', '2', '5', '6'],
+    comments: [
+      {
+        id: 'comment-1',
+        authorId: '2',
+        body: 'Joined! The grammar drills were the best part. Signing up for the next one.',
+        createdAt: new Date(Date.now() - 90 * MIN_MS).toISOString(),
+      },
+      {
+        id: 'comment-2',
+        authorId: '5',
+        body: 'Same here — my confidence in speaking has shot up.',
+        createdAt: new Date(Date.now() - 80 * MIN_MS).toISOString(),
+      },
+    ],
   },
   {
     id: 'post-2',
@@ -28,6 +42,14 @@ const seedPosts: CommunityPost[] = [
     body: 'Tip for new teachers: keep your first group class to 45 minutes. Shorter sessions mean better energy and 5-star reviews.',
     createdAt: new Date(Date.now() - 26 * 60 * MIN_MS).toISOString(),
     likedBy: ['3', '4', '6'],
+    comments: [
+      {
+        id: 'comment-3',
+        authorId: '4',
+        body: 'Solid advice. I moved my piano classes to 40 minutes and reviews improved instantly.',
+        createdAt: new Date(Date.now() - 20 * 60 * MIN_MS).toISOString(),
+      },
+    ],
   },
   {
     id: 'post-4',
@@ -57,6 +79,7 @@ interface CommunityContextValue {
   addPost: (body: string, authorId: string) => void;
   toggleLike: (postId: string, userId: string) => void;
   deletePost: (postId: string) => void;
+  addComment: (postId: string, body: string, authorId: string) => void;
 }
 
 export const [CommunityProvider, useCommunity] = createContextHook((): CommunityContextValue => {
@@ -123,8 +146,31 @@ export const [CommunityProvider, useCommunity] = createContextHook((): Community
     setPosts(prev => prev.filter(p => p.id !== postId));
   }, []);
 
+  const addComment = useCallback((postId: string, body: string, authorId: string) => {
+    const text = body.trim();
+    if (!text) return;
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === postId
+          ? {
+              ...p,
+              comments: [
+                ...(p.comments ?? []),
+                {
+                  id: `comment-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                  authorId,
+                  body: text,
+                  createdAt: new Date().toISOString(),
+                } satisfies CommunityComment,
+              ],
+            }
+          : p,
+      ),
+    );
+  }, []);
+
   return useMemo(
-    () => ({ posts, addPost, toggleLike, deletePost }),
-    [posts, addPost, toggleLike, deletePost],
+    () => ({ posts, addPost, toggleLike, deletePost, addComment }),
+    [posts, addPost, toggleLike, deletePost, addComment],
   );
 });

@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ArrowLeft, Heart, Send, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Heart, MessageCircle, Send, Trash2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
@@ -38,9 +38,11 @@ function isTeacherUser(user: User | undefined): boolean {
 export default function CommunityWallScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { posts, addPost, toggleLike, deletePost } = useCommunity();
+  const { posts, addPost, toggleLike, deletePost, addComment } = useCommunity();
   const { currentUser } = useCurrentUser();
   const [draft, setDraft] = useState('');
+  const [openCommentsId, setOpenCommentsId] = useState<string | null>(null);
+  const [commentDraft, setCommentDraft] = useState('');
 
   const handlePost = useCallback(() => {
     const text = draft.trim();
@@ -68,6 +70,26 @@ export default function CommunityWallScreen() {
     [deletePost],
   );
 
+  const openProfile = useCallback(
+    (userId: string) => {
+      router.push(`/profile/${userId}` as never);
+    },
+    [router],
+  );
+
+  const toggleComments = useCallback((postId: string) => {
+    setCommentDraft('');
+    setOpenCommentsId(prev => (prev === postId ? null : postId));
+  }, []);
+
+  const handleComment = useCallback(() => {
+    const text = commentDraft.trim();
+    if (!text || !openCommentsId) return;
+    addComment(openCommentsId, text, currentUser.id);
+    setCommentDraft('');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+  }, [commentDraft, openCommentsId, addComment, currentUser.id]);
+
   const renderPost = useCallback(
     ({ item }: { item: CommunityPost }) => {
       const author: User | undefined =
@@ -75,22 +97,31 @@ export default function CommunityWallScreen() {
       const isMine = item.authorId === currentUser.id;
       const teacher = isTeacherUser(author);
       const liked = item.likedBy.includes(currentUser.id);
+      const commentsOpen = openCommentsId === item.id;
+      const commentCount = item.comments?.length ?? 0;
 
       return (
         <View style={s.postCard}>
-          <View style={s.postHeader}>
-            <Image source={{ uri: author?.avatarUrl }} style={s.avatar} />
-            <View style={{ flex: 1 }}>
-              <View style={s.nameRow}>
-                <Text style={s.authorName}>{isMine ? 'You' : author?.name ?? 'Member'}</Text>
-                <View style={[s.badge, teacher ? s.badgeTeacher : s.badgeStudent]}>
-                  <Text style={[s.badgeText, teacher ? s.badgeTextTeacher : s.badgeTextStudent]}>
-                    {teacher ? 'Teacher' : 'Student'}
-                  </Text>
+          <View style={s.postHeaderRow}>
+            <TouchableOpacity
+              style={s.postHeader}
+              onPress={() => openProfile(item.authorId)}
+              activeOpacity={0.7}
+              accessibilityLabel={`View ${isMine ? 'your' : author?.name ?? "member's"} profile`}
+            >
+              <Image source={{ uri: author?.avatarUrl }} style={s.avatar} />
+              <View style={{ flex: 1 }}>
+                <View style={s.nameRow}>
+                  <Text style={s.authorName}>{isMine ? 'You' : author?.name ?? 'Member'}</Text>
+                  <View style={[s.badge, teacher ? s.badgeTeacher : s.badgeStudent]}>
+                    <Text style={[s.badgeText, teacher ? s.badgeTextTeacher : s.badgeTextStudent]}>
+                      {teacher ? 'Teacher' : 'Student'}
+                    </Text>
+                  </View>
                 </View>
+                <Text style={s.timeText}>{timeAgo(item.createdAt)}</Text>
               </View>
-              <Text style={s.timeText}>{timeAgo(item.createdAt)}</Text>
-            </View>
+            </TouchableOpacity>
             {isMine && (
               <TouchableOpacity
                 style={s.deleteBtn}
@@ -105,21 +136,88 @@ export default function CommunityWallScreen() {
 
           <Text style={s.postBody}>{item.body}</Text>
 
-          <TouchableOpacity
-            style={s.likeRow}
-            onPress={() => handleLike(item.id)}
-            activeOpacity={0.7}
-            testID={`like-button-${item.id}`}
-          >
-            <Heart size={18} color={liked ? '#EC4899' : Colors.light.textTertiary} fill={liked ? '#EC4899' : 'transparent'} />
-            <Text style={[s.likeText, liked && s.likeTextActive]}>
-              {item.likedBy.length > 0 ? item.likedBy.length : 'Like'}
-            </Text>
-          </TouchableOpacity>
+          <View style={s.actionsRow}>
+            <TouchableOpacity
+              style={s.actionBtn}
+              onPress={() => handleLike(item.id)}
+              activeOpacity={0.7}
+              testID={`like-button-${item.id}`}
+            >
+              <Heart size={18} color={liked ? '#EC4899' : Colors.light.textTertiary} fill={liked ? '#EC4899' : 'transparent'} />
+              <Text style={[s.likeText, liked && s.likeTextActive]}>
+                {item.likedBy.length > 0 ? item.likedBy.length : 'Like'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={s.actionBtn}
+              onPress={() => toggleComments(item.id)}
+              activeOpacity={0.7}
+              testID={`comment-button-${item.id}`}
+            >
+              <MessageCircle size={18} color={commentsOpen ? Colors.light.primary : Colors.light.textTertiary} />
+              <Text style={[s.likeText, commentsOpen && s.commentTextActive]}>
+                {commentCount > 0 ? commentCount : 'Comment'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {commentsOpen && (
+            <View style={s.commentsWrap}>
+              {(item.comments ?? []).map(comment => {
+                const commentAuthor: User | undefined =
+                  comment.authorId === currentUser.id
+                    ? currentUser
+                    : mockUsers.find(u => u.id === comment.authorId);
+                const commentIsMine = comment.authorId === currentUser.id;
+                return (
+                  <TouchableOpacity
+                    key={comment.id}
+                    style={s.commentRow}
+                    onPress={() => openProfile(comment.authorId)}
+                    activeOpacity={0.7}
+                    accessibilityLabel={`View ${commentIsMine ? 'your' : commentAuthor?.name ?? "member's"} profile`}
+                  >
+                    <Image source={{ uri: commentAuthor?.avatarUrl }} style={s.commentAvatar} />
+                    <View style={s.commentBubble}>
+                      <View style={s.commentHead}>
+                        <Text style={s.commentName}>{commentIsMine ? 'You' : commentAuthor?.name ?? 'Member'}</Text>
+                        <Text style={s.commentTime}>{timeAgo(comment.createdAt)}</Text>
+                      </View>
+                      <Text style={s.commentBody}>{comment.body}</Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+              <View style={s.commentInputRow}>
+                <Image source={{ uri: currentUser.avatarUrl }} style={s.commentAvatar} />
+                <TextInput
+                  style={s.commentInput}
+                  placeholder="Write a comment…"
+                  placeholderTextColor={Colors.light.textTertiary}
+                  value={commentDraft}
+                  onChangeText={setCommentDraft}
+                  onSubmitEditing={handleComment}
+                  returnKeyType="send"
+                  testID={`comment-input-${item.id}`}
+                />
+                <TouchableOpacity
+                  onPress={handleComment}
+                  disabled={commentDraft.trim().length === 0}
+                  activeOpacity={0.8}
+                  testID={`comment-send-${item.id}`}
+                >
+                  <Send
+                    size={18}
+                    color={commentDraft.trim().length > 0 ? Colors.light.primary : Colors.light.textTertiary}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </View>
       );
     },
-    [currentUser, handleLike, handleDelete],
+    [currentUser, handleLike, handleDelete, openProfile, toggleComments, openCommentsId, commentDraft, handleComment],
   );
 
   return (
@@ -214,7 +312,20 @@ const s = StyleSheet.create({
   timeText: { fontSize: 11, color: Colors.light.textTertiary, marginTop: 2 },
   deleteBtn: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   postBody: { fontSize: 14, lineHeight: 20, color: Colors.light.text, marginTop: 10 },
-  likeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, alignSelf: 'flex-start' },
+  postHeaderRow: { flexDirection: 'row', alignItems: 'center' },
+  actionsRow: { flexDirection: 'row', alignItems: 'center', gap: 20, marginTop: 12 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   likeText: { fontSize: 13, fontWeight: '600' as const, color: Colors.light.textTertiary },
   likeTextActive: { color: '#EC4899' },
+  commentTextActive: { color: Colors.light.primary },
+  commentsWrap: { marginTop: 12, gap: 10 },
+  commentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  commentAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: Colors.light.backgroundTertiary },
+  commentBubble: { flex: 1, backgroundColor: Colors.light.backgroundTertiary, borderRadius: 12, borderTopLeftRadius: 4, paddingHorizontal: 10, paddingVertical: 8 },
+  commentHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  commentName: { fontSize: 12, fontWeight: '700' as const, color: Colors.light.text },
+  commentTime: { fontSize: 10, color: Colors.light.textTertiary },
+  commentBody: { fontSize: 13, lineHeight: 18, color: Colors.light.text, marginTop: 2 },
+  commentInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 },
+  commentInput: { flex: 1, minHeight: 38, backgroundColor: Colors.light.backgroundTertiary, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: Colors.light.text, borderWidth: 1, borderColor: Colors.light.borderLight },
 });
