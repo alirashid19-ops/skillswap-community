@@ -18,6 +18,7 @@ import { AdminProvider } from "../providers/admin";
 import { EarningsProvider } from "../providers/earnings";
 import { QuizzesProvider } from "../providers/quizzes";
 import { AssignmentsProvider } from "../providers/assignments";
+import { RecordingsProvider } from "../providers/recordings";
 import { CommunityProvider } from "../providers/community";
 
 SplashScreen.preventAutoHideAsync();
@@ -311,6 +312,7 @@ export default function RootLayout() {
                   <SafetyProvider>
                   <NotificationsProvider>
                     <AssignmentsProvider>
+                    <RecordingsProvider>
                     <ClassesProvider>
                       <ResourcesProvider>
                         <AdminProvider>
@@ -322,6 +324,7 @@ export default function RootLayout() {
                         </AdminProvider>
                       </ResourcesProvider>
                     </ClassesProvider>
+                    </RecordingsProvider>
                     </AssignmentsProvider>
                   </NotificationsProvider>
                   </SafetyProvider>

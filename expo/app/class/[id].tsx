@@ -8,6 +8,7 @@ import Colors from '@/constants/colors';
 import { mockUsers } from '@/mocks/data';
 import { useClasses } from '@/providers/classes';
 import { useAssignments } from '@/providers/assignments';
+import { RecordingsCard } from '@/components/RecordingsCard';
 import { useCurrentUser } from '@/providers/current-user';
 import { formatCredits, getClassEnrollmentCost, formatClassSchedule, formatBillingCycle } from '@/lib/payments';
 
@@ -245,27 +246,30 @@ export default function ClassDetailScreen() {
         </View>
 
         {(isTeacher || enrolled) && (
-          <TouchableOpacity
-            style={s.assignCard}
-            onPress={() => router.push(`/class/assignments?classId=${cls.id}` as never)}
-            activeOpacity={0.8}
-            testID="class-assignments-entry"
-          >
-            <View style={s.assignIconWrap}>
-              <ClipboardList size={20} color="#6366F1" />
-            </View>
-            <View style={s.assignInfo}>
-              <Text style={s.assignTitle}>Assignments & Homework</Text>
-              <Text style={s.assignSub}>
-                {isTeacher
-                  ? `${assignmentCount} given · give work and grade submissions`
-                  : assignmentCount > 0
-                    ? `${assignmentCount} item${assignmentCount === 1 ? '' : 's'} to review`
-                    : 'Nothing assigned yet'}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={Colors.light.textTertiary} />
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={s.assignCard}
+              onPress={() => router.push(`/class/assignments?classId=${cls.id}` as never)}
+              activeOpacity={0.8}
+              testID="class-assignments-entry"
+            >
+              <View style={s.assignIconWrap}>
+                <ClipboardList size={20} color="#6366F1" />
+              </View>
+              <View style={s.assignInfo}>
+                <Text style={s.assignTitle}>Assignments & Homework</Text>
+                <Text style={s.assignSub}>
+                  {isTeacher
+                    ? `${assignmentCount} given · give work and grade submissions`
+                    : assignmentCount > 0
+                      ? `${assignmentCount} item${assignmentCount === 1 ? '' : 's'} to review`
+                      : 'Nothing assigned yet'}
+                </Text>
+              </View>
+              <ChevronRight size={18} color={Colors.light.textTertiary} />
+            </TouchableOpacity>
+            <RecordingsCard classId={cls.id} isTeacher={isTeacher} />
+          </>
         )}
 
         {enrolledStudents.length > 0 && (

@@ -406,6 +406,17 @@ export interface ClassWithTeacher extends GroupClass {
   enrollments: ClassEnrollment[];
 }
 
+/** A recorded class session, published by the teacher for enrolled students. */
+export interface ClassRecording {
+  id: string;
+  classId: string;
+  title: string;
+  /** Length of the session in seconds. */
+  durationSec: number;
+  recordedBy: string;
+  createdAt: string;
+}
+
 // ============================================================
 //  User Safety — Reports & Blocks
 // ============================================================
