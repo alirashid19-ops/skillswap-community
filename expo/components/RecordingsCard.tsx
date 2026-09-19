@@ -40,39 +40,36 @@ function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
+// Classic Animated drives styles natively on devices; web has no native animated module.
+const nativeDriver = Platform.OS !== 'web';
+
 /** Animated equalizer bars — animates while `active`, rests at a low baseline otherwise. */
 function Waveform({ active, color }: { active: boolean; color: string }) {
-  const bars = useMemo(
-    () =>
-      Array.from({ length: 24 }, (_, i) => ({
-        value: new Animated.Value(0.2),
-        duration: 420 + ((i * 97) % 380),
-      })),
-    [],
-  );
+  const bars = useMemo(() => Array.from({ length: 24 }, () => new Animated.Value(0.2)), []);
+  const durations = useMemo(() => Array.from({ length: 24 }, (_, i) => 420 + ((i * 97) % 380)), []);
 
   useEffect(() => {
     if (!active) {
-      bars.forEach(b => b.value.setValue(0.2));
+      bars.forEach(b => b.setValue(0.2));
       return;
     }
     // Varied durations desync the bars so they don't move in lockstep.
-    const anims = bars.map(b =>
+    const anims = bars.map((b, i) =>
       Animated.loop(
         Animated.sequence([
-          Animated.timing(b.value, { toValue: 1, duration: b.duration, useNativeDriver: true }),
-          Animated.timing(b.value, { toValue: 0.25, duration: b.duration, useNativeDriver: true }),
+          Animated.timing(b, { toValue: 1, duration: durations[i], useNativeDriver: nativeDriver }),
+          Animated.timing(b, { toValue: 0.25, duration: durations[i], useNativeDriver: nativeDriver }),
         ]),
       ),
     );
     anims.forEach(a => a.start());
     return () => anims.forEach(a => a.stop());
-  }, [active, bars]);
+  }, [active, bars, durations]);
 
   return (
     <View style={s.waveRow}>
       {bars.map((b, i) => (
-        <Animated.View key={i} style={[s.waveBar, { backgroundColor: color, transform: [{ scaleY: b.value }] }]} />
+        <Animated.View key={i} style={[s.waveBar, { backgroundColor: color, transform: [{ scaleY: b }] }]} />
       ))}
     </View>
   );
@@ -106,8 +103,8 @@ export const RecordingsCard = memo(function RecordingsCard({ classId, isTeacher 
 
   const pulseAnim = useRef(
     Animated.loop(Animated.sequence([
-      Animated.timing(pulseRef.current, { toValue: 1, duration: 650, useNativeDriver: true }),
-      Animated.timing(pulseRef.current, { toValue: 0.15, duration: 650, useNativeDriver: true }),
+      Animated.timing(pulseRef.current, { toValue: 1, duration: 650, useNativeDriver: nativeDriver }),
+      Animated.timing(pulseRef.current, { toValue: 0.15, duration: 650, useNativeDriver: nativeDriver }),
     ])),
   ).current;
 

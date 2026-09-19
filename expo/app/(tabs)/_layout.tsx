@@ -1,17 +1,12 @@
 import { Tabs } from "expo-router";
 import { Home, Compass, User, BookOpen, Bell, Users } from "lucide-react-native";
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 
 import Colors from "../../constants/colors";
 import { useNotifications } from "../../providers/notifications";
 
 export default function TabLayout() {
   const { unreadCount } = useNotifications();
-
-  // Temporary diagnostics: trace dead tab-bar taps on iOS simulator.
-  useEffect(() => {
-    console.log('[Tabs] TabLayout mounted');
-  }, []);
 
   const notificationsBadge = useMemo(() => {
     if (unreadCount === 0) {
@@ -54,16 +49,6 @@ export default function TabLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600' as const,
-        },
-      }}
-      screenListeners={{
-        tabPress: (e) => {
-          const routeName = (e as unknown as { route?: { name?: string } }).route?.name;
-          console.log('[Tabs] tabPress:', routeName ?? 'unknown');
-        },
-        state: (e) => {
-          const s = (e.data as { state?: { index?: number; routes?: { name?: string }[] } }).state;
-          console.log('[Tabs] state ->', s?.routes?.[s.index ?? 0]?.name ?? 'unknown');
         },
       }}
     >
