@@ -64,7 +64,8 @@
         {
           "calendarPermission": "The app needs to access your calendar."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

@@ -415,6 +415,8 @@ export interface ClassRecording {
   durationSec: number;
   recordedBy: string;
   createdAt: string;
+  /** Local file URI when this is a real video capture; absent for demo/simulated entries. */
+  videoUri?: string;
 }
 
 // ============================================================

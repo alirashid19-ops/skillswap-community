@@ -48,7 +48,7 @@ function seedRecordings(): ClassRecording[] {
 
 interface RecordingsContextValue {
   getRecordingsForClass: (classId: string) => ClassRecording[];
-  addRecording: (input: { classId: string; title: string; durationSec: number }) => void;
+  addRecording: (input: { classId: string; title: string; durationSec: number; videoUri?: string }) => void;
   deleteRecording: (id: string) => void;
 }
 
@@ -79,7 +79,7 @@ export const [RecordingsProvider, useRecordings] = createContextHook<RecordingsC
   );
 
   const addRecording = useCallback(
-    (input: { classId: string; title: string; durationSec: number }) => {
+    (input: { classId: string; title: string; durationSec: number; videoUri?: string }) => {
       const rec: ClassRecording = {
         id: `rec-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         classId: input.classId,
@@ -87,6 +87,7 @@ export const [RecordingsProvider, useRecordings] = createContextHook<RecordingsC
         durationSec: Math.max(1, Math.round(input.durationSec)),
         recordedBy: currentUser.id,
         createdAt: new Date().toISOString(),
+        videoUri: input.videoUri,
       };
       setRecordings(prev => [rec, ...prev]);
       addNotification({
